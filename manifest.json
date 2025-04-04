@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Table Taker",
+  "version": "1.0",
+  "description": "Download any table on the page as a CSV file.",
+  "permissions": ["scripting", "activeTab"],
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["js/content.js"]
+    }
+  ],
+  "background": {
+    "service_worker": "js/background.js"
+  },
+  "host_permissions": ["<all_urls>"]
+}
