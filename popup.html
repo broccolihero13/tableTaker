@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Table Taker</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="popup.css" />
+    <link rel="icon" type="image/png" href="icon.png" />
+  </head>
+  <body>
+    <div style="text-align: center;">
+      <img src="icon.png" alt="Table Taker Icon" width="48" />
+      <h1>Table Taker</h1>
+    </div>
+    <hr />
+    <h4>Excluded Sites</h4>
+    <input type="text" id="exclude-input" placeholder="example.com" />
+    <button id="add-exclude">Add</button>
+    <div id="current-site-status" style="margin-top: 10px; font-weight: bold;"></div>
+    <button id="exclude-current">Exclude Current Site</button>
+
+    <ul id="exclude-list"></ul>
+    <script src="popup.js"></script>
+  </body>
+</html>

@@ -1,0 +1,33 @@
+body {
+  min-width: 300px;
+  padding: 10px;
+  font-family: sans-serif;
+}
+
+button {
+  margin: 4px 0;
+}
+
+input {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 6px;
+}
+
+#exclude-list {
+  max-height: 150px;
+  overflow-y: auto;
+  padding-left: 0;
+}
+
+#exclude-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  list-style: none;
+  margin-bottom: 4px;
+}
+
+#current-site-status {
+  margin-bottom: 10px;
+}

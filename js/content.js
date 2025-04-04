@@ -87,9 +87,22 @@ function attachCSVDownloadButtons() {
   }
 }
 
-
 setTimeout(() => {
-  onElementRendered("table", (el) => {
-    attachCSVDownloadButtons();
+  chrome.storage.sync.get(['excludedSites'], (data) => {
+    const excluded = data.excludedSites || [];
+    const currentHost = window.location.hostname;
+    console.log(`Current host: ${currentHost}`);
+    console.log(`Excluded sites: ${excluded}`);
+  
+    if (excluded.some(site => currentHost.includes(site))) {
+      console.log(`Skipping table injection on excluded site: ${currentHost}`);
+      return;
+    }
+  
+    onElementRendered("table", (el) => {
+      attachCSVDownloadButtons();
+    });
   });
+  
+  
 }, 2000); // Wait for 2 seconds to ensure the page is fully loaded

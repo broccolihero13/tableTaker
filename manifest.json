@@ -3,7 +3,15 @@
   "name": "Table Taker",
   "version": "1.0",
   "description": "Download any table on the page as a CSV file.",
-  "permissions": ["scripting", "activeTab"],
+  "permissions": ["storage", "activeTab", "scripting"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
   "icons": {
     "16": "icon16.png",
     "48": "icon48.png",
