@@ -2,3 +2,18 @@
   currently not needed but to be updated for managing custom styles to items
   added by the extension 
 */
+
+.csv-download-button {
+  opacity: 0;
+  transform: translate(-10px, 10px);
+  transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+div:hover > .csv-download-button {
+  opacity: 1 !important;
+  transform: translate(0, 0) !important;
+  pointer-events: auto;
+}
+

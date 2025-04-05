@@ -89,3 +89,10 @@ document
       }
     });
   });
+
+document.getElementById('exclude-input').addEventListener('keypress', (event) => {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    document.getElementById('add-exclude').click();
+  }
+});

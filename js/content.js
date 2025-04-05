@@ -21,20 +21,22 @@ function attachCSVDownloadButtons() {
     if (table.dataset.csvButtonAttached) return;
 
     // Create bubble/button
-    const btn = document.createElement("button");
-    btn.innerText = "⬇ CSV";
-    btn.style.position = "absolute";
-    btn.style.top = "-15px";
-    btn.style.right = "4px";
-    btn.style.zIndex = "9999";
-    btn.style.padding = "4px 8px";
-    btn.style.fontSize = "12px";
-    btn.style.cursor = "pointer";
-    btn.style.background = "#0056d2";
-    btn.style.color = "white";
-    btn.style.border = "none";
-    btn.style.borderRadius = "6px";
-    btn.style.boxShadow = "0 2px 6px rgba(0,0,0,0.2)";
+    const btn = document.createElement('button');
+    btn.textContent = '⬇ CSV';
+    btn.className = 'csv-download-button';
+    btn.style.cssText = `
+      position: absolute;
+      top: -15px;
+      right: 5px;
+      z-index: 9999;
+      background-color: #0056d2;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    `;
 
     // Positioning container
     const wrapper = document.createElement("div");
