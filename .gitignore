@@ -1,0 +1,31 @@
+# System files
+.DS_Store
+Thumbs.db
+
+# Node.js dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build output
+dist/
+build/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Chrome extension-specific files
+*.pem  # Private key for Chrome extension signing
+
+# IDE-specific files
+.vscode/
+.idea/
+*.swp
+
+# Temporary files
+*.tmp
+*.log
+*.bak
+*.orig
