@@ -1,19 +1,47 @@
-/* 
-  currently not needed but to be updated for managing custom styles to items
-  added by the extension 
-*/
+.ext-table-wrapper {
+  position: relative;
+  margin-bottom: 8px;
+  transition: border 0.4s ease-in-out, box-shadow 0.4s ease-in-out;
+  border: 2px solid transparent;
+  border-radius: 8px;
+}
 
-.csv-download-button {
+.ext-table-wrapper:hover:not(.dragging-file) {
+  border: 2px solid #0056d2;
+  box-shadow: 0 0 6px rgba(76, 175, 80, 0.3);
+}
+
+.csv-download-button,
+.csv-upload-button {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  background-color: #0056d2;
+  color: white !important;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
   opacity: 0;
-  transform: translate(-10px, 10px);
-  transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-              transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 0.2s ease-in-out;
   pointer-events: none;
 }
 
-div:hover > .csv-download-button {
-  opacity: 1 !important;
-  transform: translate(0, 0) !important;
+.ext-table-wrapper:hover .csv-download-button {
+  opacity: 1;
   pointer-events: auto;
 }
 
+.csv-upload-button {
+  display: none;
+  top: 25px;
+  background-color: #4CAF50;
+}
+
+.csv-download-button.hidden {
+  opacity: 0 !important;
+  pointer-events: none;
+}

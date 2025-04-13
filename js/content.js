@@ -24,26 +24,19 @@ function attachCSVDownloadButtons() {
     const btn = document.createElement("button");
     btn.textContent = "⬇ CSV";
     btn.className = "csv-download-button";
-    btn.style.cssText = `
-      position: absolute;
-      top: -15px;
-      right: 5px;
-      z-index: 9999;
-      background-color: #0056d2;
-      color: white;
-      border: none;
-      padding: 4px 8px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-    `;
 
-    // Positioning container
+    const btn2 = document.createElement("button");
+    btn2.textContent = "⬆ CSV";
+    btn2.className = "csv-upload-button";
+    
+    // Wrap the table in a div to position the button
     const wrapper = document.createElement("div");
-    wrapper.style.position = "relative";
+    wrapper.classList.add("ext-table-wrapper");
+
     table.parentNode.insertBefore(wrapper, table);
     wrapper.appendChild(table);
     wrapper.appendChild(btn);
+    wrapper.appendChild(btn2);
 
     table.dataset.csvButtonAttached = "true";
 
@@ -73,7 +66,7 @@ function attachCSVDownloadButtons() {
           return `"${textarea.value}"`;
         }
 
-        const text = cell.innerText.trim();
+        const text = cell.innerText.replace(/\s*\n\s*/g, " ").trim();
         return `"${text || divText || ""}"`;
       });
 
@@ -120,21 +113,56 @@ function showUploadSuccessToast(message = "Upload Successful") {
   }, 1200);
 }
 
+function parseCSVLine(line) {
+  const values = [];
+  let current = '';
+  let insideQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const next = line[i + 1];
+
+    if (char === '"' && insideQuotes && next === '"') {
+      current += '"'; // escaped quote
+      i++;
+    } else if (char === '"') {
+      insideQuotes = !insideQuotes;
+    } else if (char === ',' && !insideQuotes) {
+      values.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+
+  values.push(current.trim()); // last value
+  return values;
+}
+
 
 function enableCSVDropOnTable(table) {
+  const wrapper = table.closest(".ext-table-wrapper");
+  const uploadBtn = wrapper.querySelector(".csv-upload-button");
+
   table.addEventListener("dragover", (e) => {
     e.preventDefault();
     table.style.outline = "2px dashed #4CAF50";
+    wrapper.classList.add("dragging-file");
+    uploadBtn.style.display = "block";
   });
 
   table.addEventListener("dragleave", () => {
     table.style.outline = "";
+    wrapper.classList.remove("dragging-file");
+    uploadBtn.style.display = "none";
   });
 
   table.addEventListener("drop", (e) => {
     e.preventDefault();
     table.style.outline = "";
-
+    wrapper.classList.remove("dragging-file");
+    uploadBtn.style.display = "none";
+    
     const file = e.dataTransfer.files[0];
     if (file && file.name.endsWith(".csv")) {
       const reader = new FileReader();
@@ -172,9 +200,15 @@ function enableCSVDropOnTable(table) {
                   cellValue === "1" ||
                   cellValue.toLowerCase() === "yes";
 
-                // Only click if current state is different
                 if (input.checked !== shouldBeChecked) {
                   input.click();
+                }
+              } else if (input.type === "number") {
+                if (!isNaN(cellValue) && cellValue !== "") {
+                  input.value = cellValue;
+                  input.dispatchEvent(new Event("input", { bubbles: true }));
+                } else {
+                  console.log("Skipped invalid number value:", cellValue);
                 }
               } else {
                 input.value = cellValue;
@@ -195,12 +229,14 @@ function enableCSVDropOnTable(table) {
       reader.readAsText(file);
       showUploadSuccessToast();
     }
+
     table.style.outline = "2px solid #4CAF50";
     setTimeout(() => {
       table.style.outline = "";
     }, 1000);
   });
 }
+
 
 setTimeout(() => {
   chrome.storage.sync.get(["excludedSites"], (data) => {
