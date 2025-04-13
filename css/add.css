@@ -14,11 +14,9 @@
 .csv-download-button,
 .csv-upload-button {
   position: absolute;
-  top: -10px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 9999;
-  background-color: #0056d2;
   color: white !important;
   border: none;
   padding: 4px 10px;
@@ -26,22 +24,33 @@
   cursor: pointer;
   font-size: 12px;
   opacity: 0;
-  transition: opacity 0.2s ease-in-out;
+  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
   pointer-events: none;
 }
 
-.ext-table-wrapper:hover .csv-download-button {
-  opacity: 1;
-  pointer-events: auto;
+/* Button placement */
+.csv-download-button {
+  top: -10px;
+  background-color: #0056d2;
 }
 
 .csv-upload-button {
-  display: none;
   top: 25px;
   background-color: #4CAF50;
+}
+
+.ext-table-wrapper:hover:not(.dragging-file) .csv-download-button {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .csv-download-button.hidden {
   opacity: 0 !important;
   pointer-events: none;
+}
+
+.csv-upload-button.showing {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) scale(1.05);
 }

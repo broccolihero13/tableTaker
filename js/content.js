@@ -143,26 +143,32 @@ function parseCSVLine(line) {
 function enableCSVDropOnTable(table) {
   const wrapper = table.closest(".ext-table-wrapper");
   const uploadBtn = wrapper.querySelector(".csv-upload-button");
+  const downloadBtn = wrapper.querySelector(".csv-download-button");
 
   table.addEventListener("dragover", (e) => {
     e.preventDefault();
     table.style.outline = "2px dashed #4CAF50";
     wrapper.classList.add("dragging-file");
-    uploadBtn.style.display = "block";
+
+    if (uploadBtn) uploadBtn.classList.add("showing");
+    if (downloadBtn) downloadBtn.classList.add("hidden");
   });
 
   table.addEventListener("dragleave", () => {
     table.style.outline = "";
     wrapper.classList.remove("dragging-file");
-    uploadBtn.style.display = "none";
+
+    if (uploadBtn) uploadBtn.classList.remove("showing");
+    if (downloadBtn) downloadBtn.classList.remove("hidden");
   });
 
   table.addEventListener("drop", (e) => {
     e.preventDefault();
     table.style.outline = "";
     wrapper.classList.remove("dragging-file");
-    uploadBtn.style.display = "none";
-    
+    if (uploadBtn) uploadBtn.classList.remove("showing");
+    if (downloadBtn) downloadBtn.classList.remove("hidden");
+
     const file = e.dataTransfer.files[0];
     if (file && file.name.endsWith(".csv")) {
       const reader = new FileReader();
@@ -236,7 +242,6 @@ function enableCSVDropOnTable(table) {
     }, 1000);
   });
 }
-
 
 setTimeout(() => {
   chrome.storage.sync.get(["excludedSites"], (data) => {

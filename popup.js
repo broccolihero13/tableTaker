@@ -41,11 +41,11 @@ function updateCurrentSiteStatus() {
   chrome.storage.sync.get(["excludedSites"], (data) => {
     const list = data.excludedSites || [];
     if (currentHostname && list.includes(currentHostname)) {
-      statusDiv.textContent = `✅ ${currentHostname} is excluded`;
-      statusDiv.style.color = "green";
-    } else {
-      statusDiv.textContent = `❌ ${currentHostname} is not excluded`;
+      statusDiv.textContent = `❌ ${currentHostname} is excluded`;
       statusDiv.style.color = "red";
+    } else {
+      statusDiv.textContent = `✅ ${currentHostname} is not excluded`;
+      statusDiv.style.color = "green";
     }
   });
 }
