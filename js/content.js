@@ -20,7 +20,6 @@ function attachCSVDownloadButtons() {
     // Avoid duplicates
     if (table.dataset.csvButtonAttached) return;
 
-    // Create bubble/button
     const btn = document.createElement("button");
     btn.textContent = "⬇ CSV";
     btn.className = "csv-download-button";
@@ -260,4 +259,4 @@ setTimeout(() => {
       });
     });
   });
-}, 2000); // Wait for 2 seconds to ensure the page is fully loaded
+}, 2000);
