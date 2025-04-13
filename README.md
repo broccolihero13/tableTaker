@@ -1,6 +1,6 @@
-# Table Taker
+# Grid Genie
 
-Table Taker is a Chrome extension that helps users interact with tables on web pages more efficiently. It allows users to download table data as a CSV file, or upload CSV data to populate form tables directly in the browser.
+Grid Genie is a Chrome extension that helps users interact with tables on web pages more efficiently. It allows users to download table data as a CSV file, or upload CSV data to populate form tables directly in the browser.
 
 🚀 Features
 
@@ -14,7 +14,7 @@ Table Taker is a Chrome extension that helps users interact with tables on web p
 
 🔐 Privacy Policy
 
-Table Taker does not collect or transmit any personal data.
+Grid Genie does not collect or transmit any personal data.
 
     The extension operates entirely in the browser and uses file input strictly to read values from CSVs to insert into visible tables via the DOM.
 
@@ -26,7 +26,7 @@ No analytics, tracking scripts, or cookies are used.
 
 ⚙️ Setup & Usage
 
-    Install the Table Taker extension from the Chrome Web Store (or load it via developer mode if testing locally).
+    Install the Grid Genie extension from the Chrome Web Store (or load it via developer mode if testing locally).
 
     Navigate to a page with a table.
 
