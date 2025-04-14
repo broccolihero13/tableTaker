@@ -54,3 +54,9 @@
   pointer-events: auto;
   transform: translateX(-50%) scale(1.05);
 }
+
+.ext-table-wrapper {
+  position: relative;
+  overflow: visible !important;
+  margin-top: 8px;
+}
