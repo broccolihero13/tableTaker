@@ -1,37 +1,99 @@
 # Grid Genie
 
-Grid Genie is a Chrome extension that helps users interact with tables on web pages more efficiently. It allows users to download table data as a CSV file, or upload CSV data to populate form tables directly in the browser.
+Grid Genie allows you to **download any table on the page as a CSV** or **upload a CSV to populate table inputs**.
 
-🚀 Features
+It works with many form-based tables, making repetitive data entry faster and less error-prone.
 
-    💾 Download tables as CSV with a single click.
+---
 
-    📤 Upload CSV files to populate table-based forms.
+## 🚀 Features
 
-    🧠 Intelligent matching of CSV values with table inputs.
+- ✅ One-click CSV **download** of HTML tables
+- ✅ Drag-and-drop CSV **upload** into editable table forms
+- ✅ Intelligently populates `input`, `textarea`, and `checkbox` fields
+- ✅ No data is stored or transmitted — everything runs in your browser
 
-    🔒 Fully client-side — no data is collected or sent anywhere.
+---
 
-🔐 Privacy Policy
+## 🛠 Installation
 
-Grid Genie does not collect or transmit any personal data.
+### 🧩 For Chrome
 
-    The extension operates entirely in the browser and uses file input strictly to read values from CSVs to insert into visible tables via the DOM.
+1. Clone or download this repository.
+2. Go to `chrome://extensions` in Chrome.
+3. Enable **Developer Mode** (top right).
+4. Click **Load unpacked** and select this repo folder.
+5. You're ready to start using Grid Genie on supported websites!
 
-    No data is sent to any server — all processing occurs locally on the user’s machine.
+### 🦊 For Firefox
 
-    We use browser.storage.sync to remember which sites the user has chosen to exclude from table processing. This preference is stored securely within the browser and is never shared.
+1. Clone or download this repository.
+2. Install [web-ext](https://extensionworkshop.com/documentation/develop/getting-started-with-web-ext/):
 
-No analytics, tracking scripts, or cookies are used.
+   ```bash
+   npm install --global web-ext
+   ```
 
-⚙️ Setup & Usage
+3. Run the extension locally:
 
-    Install the Grid Genie extension from the Chrome Web Store (or load it via developer mode if testing locally).
+   ```bash
+   web-ext run
+   ```
 
-    Navigate to a page with a table.
+4. To build a distributable `.zip` for Firefox Add-ons:
 
-    Hover over the table to reveal the ⬇ CSV button for downloading its contents.
+   ```bash
+   web-ext build
+   ```
 
-    Drag a .csv file onto the table to upload values (if the table contains input fields).
+> 📌 Note: The Firefox version includes a `browser_specific_settings` block in `manifest.json` with the ID for the production build (`extensionsupport@broccolihero.mozmail.com`).
 
-✅ That’s it. No additional configuration is needed.
+---
+
+## 📂 Folder Structure
+
+```
+📁 js/
+  └── content.js       ← CSV injection & DOM logic
+📁 css/
+  └── add.css          ← Styling for buttons and hover effects
+📁 images/
+  └── icon16.png       ← Icons
+popup.html             ← Popup interface
+popup.css              ← Popup stylesheet
+popup.js               ← Popup JS for logic
+manifest.json          ← Core extension config
+```
+
+---
+
+## 🔒 Privacy Policy
+
+Grid Genie does **not collect, transmit, or store any data**.
+
+- It only runs locally on the browser.
+- It **reads CSV files only** to populate tables on the active tab.
+- It **writes nothing** beyond table cell values using `input.value` or `innerText`.
+- A single local setting is stored (using `browser.storage.sync`) to exclude certain websites from automatic activation.
+
+---
+
+## ⚙️ Permissions Justification
+
+| Permission       | Reason                                                                 |
+|------------------|------------------------------------------------------------------------|
+| `activeTab`      | Needed to access and modify the content of the current active page     |
+| `storage`        | Used to store excluded sites locally                                   |
+| `<all_urls>`     | Required to run on any webpage where tables might be edited or viewed  |
+
+> 💡 Grid Genie does **not** use any `scripting`, `remote code`, or external APIs.
+
+---
+
+## 🙋 FAQ
+
+**Q: Why does it need `<all_urls>` permission?**  
+A: Because it needs to work on any page you open with a table. No data is collected or sent — it's just enabling table enhancements.
+
+**Q: Does it work on complex form tables?**  
+A: It handles `input`, `textarea`, and `checkbox` fields inside tables. Dynamic/JS-heavy forms may require page-specific tweaks. As time goes on and requests are made, we'll look into supporting more and more complex use cases.
