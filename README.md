@@ -20,7 +20,7 @@ Grid Genie does not collect or transmit any personal data.
 
     No data is sent to any server — all processing occurs locally on the user’s machine.
 
-    We use chrome.storage.sync to remember which sites the user has chosen to exclude from table processing. This preference is stored securely within the browser and is never shared.
+    We use browser.storage.sync to remember which sites the user has chosen to exclude from table processing. This preference is stored securely within the browser and is never shared.
 
 No analytics, tracking scripts, or cookies are used.
 

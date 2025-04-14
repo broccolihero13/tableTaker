@@ -1,5 +1,11 @@
+let browser;
+
+if (typeof browser === "undefined") {
+  browser = chrome;
+}
+
 function refreshExcludeList() {
-  chrome.storage.sync.get(["excludedSites"], (data) => {
+  browser.storage.sync.get(["excludedSites"], (data) => {
     const list = data.excludedSites || [];
     const ul = document.getElementById("exclude-list");
     ul.innerHTML = "";
@@ -13,7 +19,7 @@ function refreshExcludeList() {
       btn.style.marginLeft = "10px";
       btn.addEventListener("click", () => {
         list.splice(index, 1);
-        chrome.storage.sync.set({ excludedSites: list }, () => {
+        browser.storage.sync.set({ excludedSites: list }, () => {
           refreshExcludeList();
           updateCurrentSiteStatus();
         });
@@ -28,7 +34,7 @@ function refreshExcludeList() {
 let currentHostname = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   const url = new URL(tab.url);
   currentHostname = url.hostname;
 
@@ -38,7 +44,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 function updateCurrentSiteStatus() {
   const statusDiv = document.getElementById("current-site-status");
-  chrome.storage.sync.get(["excludedSites"], (data) => {
+  browser.storage.sync.get(["excludedSites"], (data) => {
     const list = data.excludedSites || [];
     if (currentHostname && list.includes(currentHostname)) {
       statusDiv.textContent = `❌ ${currentHostname} is excluded`;
@@ -55,11 +61,11 @@ document.getElementById("add-exclude").addEventListener("click", () => {
   const site = input.value.trim();
   if (!site) return;
 
-  chrome.storage.sync.get(["excludedSites"], (data) => {
+  browser.storage.sync.get(["excludedSites"], (data) => {
     const current = data.excludedSites || [];
     if (!current.includes(site)) {
       current.push(site);
-      chrome.storage.sync.set({ excludedSites: current }, () => {
+      browser.storage.sync.set({ excludedSites: current }, () => {
         refreshExcludeList();
         updateCurrentSiteStatus();
       });
@@ -71,18 +77,18 @@ document.getElementById("add-exclude").addEventListener("click", () => {
 document
   .getElementById("exclude-current")
   .addEventListener("click", async () => {
-    const [tab] = await chrome.tabs.query({
+    const [tab] = await browser.tabs.query({
       active: true,
       currentWindow: true,
     });
     const url = new URL(tab.url);
     const hostname = url.hostname;
 
-    chrome.storage.sync.get(["excludedSites"], (data) => {
+    browser.storage.sync.get(["excludedSites"], (data) => {
       const current = data.excludedSites || [];
       if (!current.includes(hostname)) {
         current.push(hostname);
-        chrome.storage.sync.set({ excludedSites: current }, () => {
+        browser.storage.sync.set({ excludedSites: current }, () => {
           refreshExcludeList();
           updateCurrentSiteStatus();
         });

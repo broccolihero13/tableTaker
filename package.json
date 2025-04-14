@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "build:chrome": "node scripts/build.js chrome",
+    "build:firefox": "node scripts/build.js firefox"
+  },
+  "dependencies": {
+    "fs-extra": "^11.3.0"
+  }
+}

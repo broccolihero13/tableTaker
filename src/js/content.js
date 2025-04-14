@@ -1,3 +1,9 @@
+let browser;
+
+if (typeof browser === "undefined") {
+  browser = chrome;
+}
+
 const onElementRendered = (selector, cb, _attempts, contains = false) => {
   const el = contains
     ? [...document.querySelectorAll(selector)]?.find((e) =>
@@ -243,7 +249,7 @@ function enableCSVDropOnTable(table) {
 }
 
 setTimeout(() => {
-  chrome.storage.sync.get(["excludedSites"], (data) => {
+  browser.storage.sync.get(["excludedSites"], (data) => {
     const excluded = data.excludedSites || [];
     const currentHost = window.location.hostname;
 
