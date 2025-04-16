@@ -16,7 +16,7 @@ function refreshExcludeList() {
 
       const btn = document.createElement("button");
       btn.textContent = "Remove";
-      btn.style.marginLeft = "10px";
+      btn.className = "remove-btn";
       btn.addEventListener("click", () => {
         list.splice(index, 1);
         browser.storage.sync.set({ excludedSites: list }, () => {

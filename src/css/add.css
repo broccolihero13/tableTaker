@@ -28,7 +28,6 @@
   pointer-events: none;
 }
 
-/* Button placement */
 .csv-download-button {
   top: -10px;
   background-color: #0056d2;
@@ -112,8 +111,8 @@
 }
 
 #csvUploadModal .modal-content {
-  background: #111827; /* deep navy */
-  color: #f3f4f6; /* soft white-gray */
+  background: #111827;
+  color: #f3f4f6;
   padding: 24px;
   border-radius: 16px;
   width: 400px;

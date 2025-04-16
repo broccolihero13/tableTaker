@@ -1,33 +1,101 @@
 body {
-  min-width: 300px;
-  padding: 10px;
-  font-family: sans-serif;
+  margin: 0;
+  padding: 16px;
+  background-color: #0f172a;
+  color: #f1f5f9;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  width: 300px;
+  min-height: 300px;
+}
+
+h1 {
+  font-size: 20px;
+  margin: 10px 0 5px;
+  color: #00ffcc;
+  text-shadow: 0 0 4px #00ffcc;
+}
+
+h4 {
+  margin-top: 16px;
+  font-size: 14px;
+  color: #38bdf8;
+  border-bottom: 1px solid #334155;
+  padding-bottom: 4px;
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 8px;
+  margin-top: 8px;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  background-color: #1e293b;
+  color: #f8fafc;
+  font-size: 14px;
 }
 
 button {
   margin: 4px 0;
 }
 
-input {
-  width: 100%;
-  box-sizing: border-box;
-  margin-bottom: 6px;
+.action-button {
+  background-color: #00ffcc;
+  color: #0f172a;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: 10px;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.action-button:hover {
+  background-color: #00e6b8;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #334155;
+  margin: 16px 0;
+}
+
+#current-site-status {
+  font-size: 13px;
+  color: #facc15;
 }
 
 #exclude-list {
-  max-height: 150px;
-  overflow-y: auto;
+  list-style: none;
   padding-left: 0;
+  margin-top: 10px;
+  font-size: 13px;
+  color: #cbd5e1;
 }
 
 #exclude-list li {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  list-style: none;
-  margin-bottom: 4px;
+  padding: 6px 10px;
+  background-color: #1e293b;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  word-break: break-word;
 }
 
-#current-site-status {
-  margin-bottom: 10px;
+.remove-btn {
+  background-color: #ef4444;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.remove-btn:hover {
+  background-color: #dc2626;
 }
