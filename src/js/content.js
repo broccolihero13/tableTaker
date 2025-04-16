@@ -200,15 +200,12 @@ function enableCSVDropOnTable(table) {
           const tbody = table.querySelector("tbody") || table;
 
           if (useHeaders){
-            console.log("Using headers");
             let headers = dataRows.shift();
             const headerRow = table.querySelector("thead") || table.querySelector('tr:has(th)');
             const headerCells = headerRow ? headerRow.querySelectorAll("th") : [];
   
             if (headerCells.length > 0) {
-              console.log("found header cells");
               headerCells.forEach((cell, index) => {
-                console.log("header cell", index, cell);
                 if (headers[index]) {
                   cell.textContent = headers[index];
                 }
