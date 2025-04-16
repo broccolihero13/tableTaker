@@ -31,9 +31,9 @@ function attachCSVDownloadButtons() {
     btn.className = "csv-download-button";
 
     const btn2 = document.createElement("button");
-    btn2.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path fill="#ffffff" d="M288 109.3L288 352c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-242.7-73.4 73.4c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3l128-128c12.5-12.5 32.8-12.5 45.3 0l128 128c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L288 109.3zM64 352l128 0c0 35.3 28.7 64 64 64s64-28.7 64-64l128 0c35.3 0 64 28.7 64 64l0 32c0 35.3-28.7 64-64 64L64 512c-35.3 0-64-28.7-64-64l0-32c0-35.3 28.7-64 64-64zM432 456a24 24 0 1 0 0-48 24 24 0 1 0 0 48z"/></svg> CSV';
+    btn2.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="color: #ffffff; width: 16px; height: 16px><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path fill="#ffffff" d="M288 109.3L288 352c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-242.7-73.4 73.4c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3l128-128c12.5-12.5 32.8-12.5 45.3 0l128 128c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L288 109.3zM64 352l128 0c0 35.3 28.7 64 64 64s64-28.7 64-64l128 0c35.3 0 64 28.7 64 64l0 32c0 35.3-28.7 64-64 64L64 512c-35.3 0-64-28.7-64-64l0-32c0-35.3 28.7-64 64-64zM432 456a24 24 0 1 0 0-48 24 24 0 1 0 0 48z"/></svg> CSV';
     btn2.className = "csv-upload-button";
-    
+
     // Wrap the table in a div to position the button
     const wrapper = document.createElement("div");
     wrapper.classList.add("ext-table-wrapper");
@@ -90,22 +90,8 @@ function attachCSVDownloadButtons() {
 function showUploadSuccessToast(message = "Upload Successful") {
   const toast = document.createElement("div");
   toast.textContent = message;
-  toast.style.cssText = `
-    position: fixed;
-    bottom: 40px;
-    left: 50%;
-    transform: translateX(-50%) translateY(0);
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 6px;
-    font-size: 14px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    opacity: 1;
-    z-index: 9999;
-    transition: all 1s ease-out;
-    pointer-events: none;
-  `;
+  toast.id = "csv-upload-toast";
+
   document.body.appendChild(toast);
 
   setTimeout(() => {
@@ -128,7 +114,7 @@ function parseCSVLine(line) {
     const next = line[i + 1];
 
     if (char === '"' && insideQuotes && next === '"') {
-      current += '"'; // escaped quote
+      current += '"';
       i++;
     } else if (char === '"') {
       insideQuotes = !insideQuotes;
@@ -140,10 +126,9 @@ function parseCSVLine(line) {
     }
   }
 
-  values.push(current.trim()); // last value
+  values.push(current.trim());
   return values;
 }
-
 
 function enableCSVDropOnTable(table) {
   const wrapper = table.closest(".ext-table-wrapper");
@@ -174,71 +159,118 @@ function enableCSVDropOnTable(table) {
     if (uploadBtn) uploadBtn.classList.remove("showing");
     if (downloadBtn) downloadBtn.classList.remove("hidden");
 
-    const file = e.dataTransfer.files[0];
+    const file = e.dataTransfer.files && e.dataTransfer.files.length > 0 ? e.dataTransfer.files[0] : null;
+    if (!file || !file.name.endsWith(".csv") || !file.type === "text/csv") {
+      console.log("No file was dropped or the file list is empty.");
+      return;
+    }
     if (file && file.name.endsWith(".csv")) {
       const reader = new FileReader();
       reader.onload = function (event) {
         const csvText = event.target.result;
-        const rows = csvText
+        const allRows = csvText
           .trim()
           .split("\n")
-          .map((row) => row.split(","));
+          .map((row) => parseCSVLine(row));
 
-        const tbody = table.querySelector("tbody");
-        if (!tbody) return;
+        const modal = createCsvModal();
 
-        const tableRows = [...tbody.querySelectorAll("tr")].filter(
-          (row) => {
-            return row.querySelectorAll("td").length > 0 && row.querySelectorAll(".drplt-no-border").length < 1
+        document.getElementById("csv-confirm").onclick = () => {
+          const useHeaders = document.getElementById("csv-use-headers").checked;
+          const cols = parseNumberInput(
+            document.getElementById("csv-cols").value
+          );
+          const rows = parseNumberInput(
+            document.getElementById("csv-rows").value
+          );
+          modal.remove();
+
+          let dataRows = [...allRows];
+
+          // Filter rows
+          if (rows) {
+            dataRows = dataRows.filter((_, i) => rows.includes(i + 1));
           }
-        );
 
-        for (let i = 0; i < rows.length; i++) {
-          const rowData = rows[i];
-          const tableRow = tableRows[i];
-          if (!tableRow) continue;
+          // Filter columns
+          if (cols) {
+            dataRows = dataRows.map((row) => cols.map((c) => row[c - 1] || ""));
+          }
+          
+          const tbody = table.querySelector("tbody") || table;
 
-          const cells = tableRow.querySelectorAll("td");
-
-          for (let j = 0; j < rowData.length && j < cells.length; j++) {
-            const cellValue = rowData[j].trim().replace(/^"|"$/g, "");
-            const input = cells[j].querySelector("input");
-
-            if (input) {
-              if (input.type === "checkbox") {
-                const shouldBeChecked =
-                  cellValue.toLowerCase() === "true" ||
-                  cellValue === "1" ||
-                  cellValue.toLowerCase() === "yes";
-
-                if (input.checked !== shouldBeChecked) {
-                  input.click();
+          if (useHeaders){
+            console.log("Using headers");
+            let headers = dataRows.shift();
+            const headerRow = table.querySelector("thead") || table.querySelector('tr:has(th)');
+            const headerCells = headerRow ? headerRow.querySelectorAll("th") : [];
+  
+            if (headerCells.length > 0) {
+              console.log("found header cells");
+              headerCells.forEach((cell, index) => {
+                console.log("header cell", index, cell);
+                if (headers[index]) {
+                  cell.textContent = headers[index];
                 }
-              } else if (input.type === "number") {
-                if (!isNaN(cellValue) && cellValue !== "") {
+              });
+            }
+          };
+
+          
+          const tableRows = [...tbody.querySelectorAll("tr")].filter((row) => {
+            return (
+              row.querySelectorAll("td").length > 0 &&
+              row.querySelectorAll(".drplt-no-border").length < 1
+            );
+          });
+
+          for (
+            let i = 0;
+            i < dataRows.length && i < tableRows.length;
+            i++
+          ) {
+            const rowData = dataRows[i];
+            const tableRow = tableRows[i];
+            const cells = tableRow.querySelectorAll("td");
+
+            for (let j = 0; j < rowData.length && j < cells.length; j++) {
+              const cellValue = rowData[j].trim().replace(/^"|"$/g, "");
+              const input = cells[j].querySelector("input");
+
+              if (input) {
+                if (input.type === "checkbox") {
+                  const shouldBeChecked =
+                    cellValue.toLowerCase() === "true" ||
+                    cellValue === "1" ||
+                    cellValue.toLowerCase() === "yes";
+
+                  if (input.checked !== shouldBeChecked) {
+                    input.click();
+                  }
+                } else if (input.type === "number") {
+                  if (!isNaN(cellValue) && cellValue !== "") {
+                    input.value = cellValue;
+                    input.dispatchEvent(new Event("input", { bubbles: true }));
+                  }
+                } else {
                   input.value = cellValue;
                   input.dispatchEvent(new Event("input", { bubbles: true }));
-                } else {
-                  console.log("Skipped invalid number value:", cellValue);
                 }
               } else {
-                input.value = cellValue;
-                input.dispatchEvent(new Event("input", { bubbles: true }));
-              }
-            } else {
-              // No input? Just set the text content if it's plain text
-              const div = cells[j].querySelector("div");
-              if (div && div.classList.contains("drplt-text")) {
-                div.textContent = cellValue;
-              } else {
-                cells[j].textContent = cellValue;
+                const div = cells[j].querySelector("div");
+                if (div && div.classList.contains("drplt-text")) {
+                  div.textContent = cellValue;
+                } else {
+                  cells[j].textContent = cellValue;
+                }
               }
             }
           }
-        }
+          showUploadSuccessToast();
+        };
       };
+
       reader.readAsText(file);
-      showUploadSuccessToast();
     }
 
     table.style.outline = "2px solid #4CAF50";
@@ -246,6 +278,46 @@ function enableCSVDropOnTable(table) {
       table.style.outline = "";
     }, 1000);
   });
+}
+
+function createCsvModal() {
+  const modal = document.createElement("div");
+  modal.id = "csvUploadModal";
+
+  modal.innerHTML = `
+  <div class="modal-content">
+    <h2>Upload CSV Options</h2>
+    <label><input type="checkbox" id="csv-use-headers" checked /> Use first row as headers</label>
+    <label>Columns to include (e.g. 1,2,4):
+      <input type="text" id="csv-cols" placeholder="All" />
+    </label>
+    <label>Rows to include (e.g. 2-5,8):
+      <input type="text" id="csv-rows" placeholder="All" />
+    </label>
+    <div style="margin-top: 16px; text-align: right;">
+      <button id="csv-cancel">Cancel</button>
+      <button id="csv-confirm">Upload</button>
+    </div>
+  </div>
+`;
+
+  document.body.appendChild(modal);
+
+  document.getElementById("csv-cancel").onclick = () => modal.remove();
+  return modal;
+}
+
+function parseNumberInput(input) {
+  if (!input) return null;
+  const parts = input.split(",").flatMap((part) => {
+    if (part.includes("-")) {
+      const [start, end] = part.split("-").map(Number);
+      return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+    } else {
+      return [parseInt(part)];
+    }
+  });
+  return [...new Set(parts)].filter((n) => !isNaN(n));
 }
 
 setTimeout(() => {
