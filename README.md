@@ -85,7 +85,7 @@ Grid Genie does **not collect, transmit, or store any data**.
 | `scripting`      | Used to inject functions onto current page when the button is clicked  |
 | `<all_urls>`     | Required to run on any webpage where tables might be edited or viewed  |
 
-> 💡 Grid Genie does **not** use any `scripting`, `remote code`, or external APIs.
+> 💡 Grid Genie does **not** use any `remote code`, or external APIs.
 
 ---
 
