@@ -74,7 +74,6 @@ Grid Genie does **not collect, transmit, or store any data**.
 - It only runs locally on the browser.
 - It **reads CSV files only** to populate tables on the active tab.
 - It **writes nothing** beyond table cell values using `input.value` or `innerText`.
-- A single local setting is stored (using `browser.storage.sync`) to exclude certain websites from automatic activation.
 
 ---
 
@@ -83,7 +82,7 @@ Grid Genie does **not collect, transmit, or store any data**.
 | Permission       | Reason                                                                 |
 |------------------|------------------------------------------------------------------------|
 | `activeTab`      | Needed to access and modify the content of the current active page     |
-| `storage`        | Used to store excluded sites locally                                   |
+| `scripting`      | Used to inject functions onto current page when the button is clicked  |
 | `<all_urls>`     | Required to run on any webpage where tables might be edited or viewed  |
 
 > 💡 Grid Genie does **not** use any `scripting`, `remote code`, or external APIs.

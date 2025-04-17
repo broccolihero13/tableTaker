@@ -318,20 +318,10 @@ function parseNumberInput(input) {
 }
 
 setTimeout(() => {
-  browser.storage.sync.get(["excludedSites"], (data) => {
-    const excluded = data.excludedSites || [];
-    const currentHost = window.location.hostname;
-
-    if (excluded.some((site) => currentHost.includes(site))) {
-      console.log(`Skipping table injection on excluded site: ${currentHost}`);
-      return;
-    }
-
     onElementRendered("table", (el) => {
       attachCSVDownloadButtons();
       document.querySelectorAll("table").forEach((table) => {
         enableCSVDropOnTable(table);
       });
     });
-  });
 }, 500);
