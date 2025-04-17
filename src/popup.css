@@ -61,41 +61,7 @@ hr {
   margin: 16px 0;
 }
 
-#current-site-status {
-  font-size: 13px;
-  color: #facc15;
-}
-
-#exclude-list {
-  list-style: none;
-  padding-left: 0;
-  margin-top: 10px;
-  font-size: 13px;
-  color: #cbd5e1;
-}
-
-#exclude-list li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 10px;
-  background-color: #1e293b;
-  border-radius: 6px;
-  margin-bottom: 6px;
-  word-break: break-word;
-}
-
-.remove-btn {
-  background-color: #ef4444;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
-}
-
-.remove-btn:hover {
-  background-color: #dc2626;
+.center-text {
+  text-align: center;
+  margin: auto;
 }
