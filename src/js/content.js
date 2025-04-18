@@ -286,32 +286,44 @@ const enableCSVDropOnTable = (table) => {
   });
 }
 
-const createCsvModal = () => {
+const createCsvModal = (onConfirm, onCancel) => {
+  const existingModal = document.getElementById("csvUploadModal");
+  if (existingModal) existingModal.remove();
+
   const modal = document.createElement("div");
   modal.id = "csvUploadModal";
 
   modal.innerHTML = `
-  <div class="modal-content">
-    <h2>Upload CSV Options</h2>
-    <label><input type="checkbox" id="csv-use-headers" checked /> Use first row as headers</label>
-    <label>Columns to include (e.g. 1,2,4):
-      <input type="text" id="csv-cols" placeholder="All" />
-    </label>
-    <label>Rows to include (e.g. 2-5,8):
-      <input type="text" id="csv-rows" placeholder="All" />
-    </label>
-    <div style="margin-top: 16px; text-align: right;">
-      <button id="csv-cancel">Cancel</button>
-      <button id="csv-confirm">Upload</button>
+    <div class="modal-content">
+      <h2>Upload CSV Options</h2>
+      <label><input type="checkbox" id="csv-use-headers" checked /> Use first row as headers</label>
+      <label>Columns to include (e.g. 1,2,4):
+        <input type="text" id="csv-cols" placeholder="All" />
+      </label>
+      <label>Rows to include (e.g. 2-5,8):
+        <input type="text" id="csv-rows" placeholder="All" />
+      </label>
+      <div style="margin-top: 16px; text-align: right;">
+        <button id="csv-cancel">Cancel</button>
+        <button id="csv-confirm">Upload</button>
+      </div>
     </div>
-  </div>
-`;
+  `;
 
   document.body.appendChild(modal);
 
-  document.getElementById("csv-cancel").onclick = () => modal.remove();
+  document.getElementById("csv-confirm").onclick = () => {
+    if (typeof onConfirm === "function") onConfirm(modal);
+  };
+
+  document.getElementById("csv-cancel").onclick = () => {
+    if (typeof onCancel === "function") onCancel(modal);
+    modal.remove();
+  };
+
   return modal;
-}
+};
+
 
 const parseNumberInput = (input) => {
   if (!input) return null;
