@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Grid Genie",
-  "version": "1.5",
+  "version": "1.6",
   "description": "Upload a CSV to any table or download any table on the page as a CSV file.",
   "permissions": ["activeTab"],
   "action": {

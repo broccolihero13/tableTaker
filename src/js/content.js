@@ -20,7 +20,13 @@ const onElementRendered = (selector, cb, _attempts, contains = false) => {
       )
     : document.querySelector(selector);
   if (el) return cb(el);
-  if (_attempts == 50) return;
+  if (_attempts == 15) {
+    showBanner(
+      `No ${selector} found on this page.`,
+      "error"
+    );
+    return;
+  }
   _attempts = ++_attempts || 1;
   setTimeout(() => onElementRendered(selector, cb, _attempts, contains), 250);
 };
