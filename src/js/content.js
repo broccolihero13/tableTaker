@@ -4,6 +4,15 @@ if (typeof browser === "undefined") {
   browser = chrome;
 }
 
+browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "activate") {
+    activateTables();
+  } else if (message.action === "deactivate") {
+    deactivateTables();
+  }
+});
+
+
 const onElementRendered = (selector, cb, _attempts, contains = false) => {
   const el = contains
     ? [...document.querySelectorAll(selector)]?.find((e) =>
@@ -16,7 +25,7 @@ const onElementRendered = (selector, cb, _attempts, contains = false) => {
   setTimeout(() => onElementRendered(selector, cb, _attempts, contains), 250);
 };
 
-function attachCSVDownloadButtons() {
+const attachCSVDownloadButtons = () => {
   const tables = document.querySelectorAll("table");
   if (!tables.length) {
     return;
@@ -87,7 +96,7 @@ function attachCSVDownloadButtons() {
   }
 }
 
-function showUploadSuccessToast(message = "Upload Successful") {
+const showUploadSuccessToast = (message = "Upload Successful") => {
   const toast = document.createElement("div");
   toast.textContent = message;
   toast.id = "csv-upload-toast";
@@ -104,7 +113,7 @@ function showUploadSuccessToast(message = "Upload Successful") {
   }, 1200);
 }
 
-function parseCSVLine(line) {
+const parseCSVLine = (line) => {
   const values = [];
   let current = '';
   let insideQuotes = false;
@@ -130,7 +139,7 @@ function parseCSVLine(line) {
   return values;
 }
 
-function enableCSVDropOnTable(table) {
+const enableCSVDropOnTable = (table) => {
   const wrapper = table.closest(".ext-table-wrapper");
   const uploadBtn = wrapper.querySelector(".csv-upload-button");
   const downloadBtn = wrapper.querySelector(".csv-download-button");
@@ -277,7 +286,7 @@ function enableCSVDropOnTable(table) {
   });
 }
 
-function createCsvModal() {
+const createCsvModal = () => {
   const modal = document.createElement("div");
   modal.id = "csvUploadModal";
 
@@ -304,7 +313,7 @@ function createCsvModal() {
   return modal;
 }
 
-function parseNumberInput(input) {
+const parseNumberInput = (input) => {
   if (!input) return null;
   const parts = input.split(",").flatMap((part) => {
     if (part.includes("-")) {
@@ -317,11 +326,53 @@ function parseNumberInput(input) {
   return [...new Set(parts)].filter((n) => !isNaN(n));
 }
 
-setTimeout(() => {
+function showBanner(message, type = "success") {
+  const existingBanner = document.getElementById("grid-genie-banner");
+  if (existingBanner) existingBanner.remove();
+
+  const banner = document.createElement("div");
+  banner.id = "grid-genie-banner";
+  banner.innerText = message;
+  banner.style.backgroundColor = type === "success" ? "#4CAF50" : "#F44336";
+
+  document.body.appendChild(banner);
+
+  requestAnimationFrame(() => {
+    banner.style.top = "0";
+  });
+
+  setTimeout(() => {
+    banner.style.top = "-60px";
+    setTimeout(() => banner.remove(), 400);
+  }, 3000);
+}
+
+
+const activateTables = () => {
+  setTimeout(() => {
     onElementRendered("table", (el) => {
       attachCSVDownloadButtons();
-      document.querySelectorAll("table").forEach((table) => {
+      let tables = document.querySelectorAll("table")
+      tables.forEach((table) => {
         enableCSVDropOnTable(table);
       });
+      showBanner(`Activated ${tables.length} table(s)`, "success");
     });
-}, 500);
+  }, 500);
+}
+
+const deactivateTables = () => {
+  const tables = document.querySelectorAll("table");
+  tables.forEach((table) => {
+    const wrapper = table.closest(".ext-table-wrapper");
+    if (wrapper) {
+      wrapper.replaceWith(table);
+    }
+    table.removeAttribute("data-csv-button-attached");
+  });
+
+  const toasts = document.querySelectorAll("#csv-upload-toast");
+  toasts.forEach((toast) => toast.remove());
+  showBanner(`Deactivated ${tables.length} table(s)`, "error");
+};
+

@@ -5,11 +5,20 @@ if (typeof browser === "undefined") {
 }
 
 document.getElementById("activate").addEventListener("click", () => {
-  chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+  browser.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
     if (tab?.id) {
-      chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        files: ["js/content.js"]
+      browser.tabs.sendMessage(tab.id, {
+        action: "activate",
+      });
+    }
+  });
+});
+
+document.getElementById("deactivate").addEventListener("click", () => {
+  browser.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+    if (tab?.id) {
+      browser.tabs.sendMessage(tab.id, {
+        action: "deactivate",
       });
     }
   });
