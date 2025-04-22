@@ -20,6 +20,12 @@ const onElementRendered = (selector, cb, _attempts, contains = false) => {
       )
     : document.querySelector(selector);
   if (el) return cb(el);
+  if (_attempts == 1) {
+    showBanner(
+      `Searching for ${selector} on this page.`,
+      "message"
+    );
+  }
   if (_attempts == 15) {
     showBanner(
       `No ${selector} found on this page.`,
@@ -351,7 +357,7 @@ function showBanner(message, type = "success") {
   const banner = document.createElement("div");
   banner.id = "grid-genie-banner";
   banner.innerText = message;
-  banner.style.backgroundColor = type === "success" ? "#4CAF50" : "#F44336";
+  banner.style.backgroundColor = type === "success" ? "#4CAF50" : type === "error" ? "#F44336" : "#2196F3";
 
   document.body.appendChild(banner);
 
