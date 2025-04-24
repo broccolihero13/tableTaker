@@ -12,6 +12,17 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
+browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "checkButtons") {
+    const tables  = document.querySelectorAll("table");
+    const buttons = document.querySelectorAll(".csv-download-button");
+    const hasTables = tables.length > 0;
+    const ok = hasTables && buttons.length === tables.length;
+
+    sendResponse({ hasTables, buttonsStillAttached: ok });
+  }
+});
+
 
 const onElementRendered = (selector, cb, _attempts, contains = false) => {
   const el = contains
