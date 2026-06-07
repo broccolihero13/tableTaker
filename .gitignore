@@ -20,6 +20,7 @@ yarn-error.log*
 *.pem  # Private key for Chrome extension signing
 
 # IDE-specific files
+.antigravitycli/
 .vscode/
 .idea/
 *.swp
