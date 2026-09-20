@@ -12,6 +12,7 @@ It works with many form-based tables, making repetitive data entry faster and le
 ## 🚀 Features
 
 - ✅ One-click **CSV, JSON**, and **TSV (Copy)** download of HTML tables
+- ✅ Native **Google Sheets** support: instantly export any Google Sheet to JSON!
 - ✅ Drag-and-drop **CSV & JSON** upload into editable table forms
 - ✅ Intelligently populates `input`, `textarea`, `select` (dropdowns), and `checkbox` fields
 - ✅ React, Vue, and modern JS framework compatibility via native event dispatching

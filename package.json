@@ -2,7 +2,11 @@
   "scripts": {
     "test": "jest",
     "build:chrome": "node scripts/build.js chrome",
-    "build:firefox": "node scripts/build.js firefox"
+    "build:firefox": "node scripts/build.js firefox",
+    "build": "npm run build:chrome && npm run build:firefox",
+    "package:chrome": "npm run build:chrome && cd build/chrome && zip -r ../chrome-extension.zip * -x \".*\" -x \"__MACOSX\" -x \"*.DS_Store\"",
+    "package:firefox": "npm run build:firefox && cd build/firefox && zip -r ../firefox-extension.zip * -x \".*\" -x \"__MACOSX\" -x \"*.DS_Store\"",
+    "package": "npm run package:chrome && npm run package:firefox"
   },
   "dependencies": {
     "fs-extra": "^11.3.0"

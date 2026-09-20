@@ -60,7 +60,7 @@
   margin-top: 8px;
 }
 
-#csvUploadModal {
+#csvUploadModal, #jsonDownloadModal {
   position: fixed;
   top: 0;
   left: 0;
@@ -73,7 +73,7 @@
   z-index: 10000;
 }
 
-#csvUploadModal > div {
+#csvUploadModal > div, #jsonDownloadModal > div {
   background: white;
   padding: 20px;
   border-radius: 12px;
@@ -98,7 +98,7 @@
   pointer-events: none;
 }
 
-#csvUploadModal {
+#csvUploadModal, #jsonDownloadModal {
   position: fixed;
   top: 0; left: 0;
   width: 100%; height: 100%;
@@ -110,7 +110,7 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-#csvUploadModal .modal-content {
+#csvUploadModal .modal-content, #jsonDownloadModal .modal-content {
   background: #111827;
   color: #f3f4f6;
   padding: 24px;
@@ -120,20 +120,20 @@
   animation: fadeIn 0.3s ease-out;
 }
 
-#csvUploadModal h2 {
+#csvUploadModal h2, #jsonDownloadModal h2 {
   margin-top: 0;
   color: #00ffcc;
   font-size: 20px;
   margin-bottom: 16px;
 }
 
-#csvUploadModal label {
+#csvUploadModal label, #jsonDownloadModal label {
   display: block;
   margin: 12px 0;
   font-size: 14px;
 }
 
-#csvUploadModal input[type="text"] {
+#csvUploadModal input[type="text"], #jsonDownloadModal input[type="text"] {
   width: 100%;
   padding: 8px;
   margin-top: 4px;
@@ -144,12 +144,12 @@
   font-size: 14px;
 }
 
-#csvUploadModal input[type="checkbox"] {
+#csvUploadModal input[type="checkbox"], #jsonDownloadModal input[type="checkbox"] {
   transform: scale(1.2);
   margin-right: 8px;
 }
 
-#csvUploadModal button {
+#csvUploadModal button, #jsonDownloadModal button {
   background: #00ffcc;
   border: none;
   border-radius: 8px;
@@ -162,18 +162,18 @@
   transition: background 0.2s ease;
 }
 
-#csvUploadModal button:hover {
+#csvUploadModal button, #jsonDownloadModal button:hover {
   background: #00e6b8;
 }
 
-#csvUploadModal #csv-cancel {
+#csvUploadModal #csv-cancel, #jsonDownloadModal #json-cancel {
   background: transparent;
   color: #9ca3af;
   border: 1px solid #4b5563;
   margin-right: 8px;
 }
 
-#csvUploadModal #csv-cancel:hover {
+#csvUploadModal #csv-cancel, #jsonDownloadModal #json-cancel:hover {
   background: #1f2937;
   color: #f3f4f6;
 }
@@ -193,4 +193,9 @@
   padding: 15px;
   z-index: 9999;
   transition: top 0.4s ease;
+}
+
+#jsonDownloadModal input[type="radio"] {
+  transform: scale(1.2);
+  margin-right: 8px;
 }

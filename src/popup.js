@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (stale) {
         showStalePageUI();
       } else {
-        loadExtensionUI();
+        loadExtensionUI(url);
       }
     });
     
@@ -52,7 +52,17 @@ const showStalePageUI = () => {
   });
 }
 
-const loadExtensionUI = () => {
+const loadExtensionUI = (url) => {
+  if (url && url.includes("docs.google.com/spreadsheets")) {
+    const activateBtn = document.getElementById("activate");
+    const deactivateBtn = document.getElementById("deactivate");
+    if (activateBtn) {
+      activateBtn.innerText = "Export Sheet to JSON";
+    }
+    if (deactivateBtn) {
+      deactivateBtn.style.display = "none";
+    }
+  }
   document.getElementById("activate").addEventListener("click", () => {
     browser.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
       if (tab?.id) {
