@@ -125,7 +125,7 @@ const attachCSVDownloadButtons = () => {
       extractTableAndDownload(table, 'csv');
     });
     btnJson.addEventListener("click", () => {
-      extractTableAndDownload(table, 'json');
+      createJsonDownloadModal(table);
     });
     btnCopy.addEventListener("click", () => {
       extractTableAndDownload(table, 'tsv');
@@ -205,24 +205,70 @@ function getTableData(table) {
     return csvLines.join("\n");
   }
 
-  function formatAsJSON(data) {
+  function formatAsJSON(data, formatOption = 'arrayOfObjects') {
+    if (formatOption === 'arrayOfArrays') {
+      return JSON.stringify(data, null, 2);
+    }
+    
+    if (formatOption === 'keyValuePairs') {
+      let obj = {};
+      data.forEach(row => {
+        if (row && row.length >= 2) {
+          let keyStr = "";
+          try { keyStr = String(row[0] || "").trim(); } catch(e) {}
+          let valStr = "";
+          try { valStr = String(row[1] || ""); } catch(e) {}
+          if (keyStr) obj[keyStr] = valStr;
+        } else if (row && row.length === 1) {
+          let keyStr = "";
+          try { keyStr = String(row[0] || "").trim(); } catch(e) {}
+          if (keyStr) obj[keyStr] = null;
+        }
+      });
+      return JSON.stringify(obj, null, 2);
+    }
+
     if (data.length > 1) {
       const headers = (data[0] || []).map(h => {
         try { return String(h || "").trim(); } catch(e) { return ""; }
       });
       const rows = data.slice(1);
-      const objects = rows.map(row => {
-        let obj = {};
-        if (Array.isArray(row)) {
-          row.forEach((cell, i) => {
-            let cellStr = "";
-            try { cellStr = String(cell || ""); } catch(e) {}
-            obj[headers[i] || `Column${i}`] = cellStr;
-          });
-        }
-        return obj;
-      });
-      return JSON.stringify(objects, null, 2);
+
+      if (formatOption === 'objectOfObjects') {
+        const result = {};
+        rows.forEach(row => {
+          let rowObj = {};
+          let rowKey = "";
+          if (Array.isArray(row)) {
+            row.forEach((cell, i) => {
+              let cellStr = "";
+              try { cellStr = String(cell || ""); } catch(e) {}
+              if (i === 0) {
+                rowKey = cellStr.trim();
+              } else {
+                rowObj[headers[i] || `Column${i}`] = cellStr;
+              }
+            });
+          }
+          if (rowKey) {
+            result[rowKey] = rowObj;
+          }
+        });
+        return JSON.stringify(result, null, 2);
+      } else {
+        const objects = rows.map(row => {
+          let obj = {};
+          if (Array.isArray(row)) {
+            row.forEach((cell, i) => {
+              let cellStr = "";
+              try { cellStr = String(cell || ""); } catch(e) {}
+              obj[headers[i] || `Column${i}`] = cellStr;
+            });
+          }
+          return obj;
+        });
+        return JSON.stringify(objects, null, 2);
+      }
     } else {
       return JSON.stringify(data, null, 2);
     }
@@ -245,7 +291,7 @@ function getTableData(table) {
     return tsvLines.join("\n");
   }
 
-  function extractTableAndDownload(table, format) {
+  function extractTableAndDownload(table, format, jsonFormat = 'arrayOfObjects') {
     try {
       const data = getTableData(table) || [];
 
@@ -253,7 +299,7 @@ function getTableData(table) {
         const csvContent = formatAsCSV(data);
         downloadBlob(csvContent, "text/csv;charset=utf-8;", "table-export.csv");
       } else if (format === 'json') {
-        const jsonContent = formatAsJSON(data);
+        const jsonContent = formatAsJSON(data, jsonFormat);
         downloadBlob(jsonContent, "application/json;charset=utf-8;", "table-export.json");
       } else if (format === 'tsv') {
         const tsvContent = formatAsTSV(data);
@@ -506,6 +552,74 @@ const enableCSVDropOnTable = (table) => {
   });
 }
 
+const createJsonDownloadModal = (table) => {
+  const existingModal = document.getElementById("jsonDownloadModal");
+  if (existingModal) existingModal.remove();
+
+  const modal = document.createElement("div");
+  modal.id = "jsonDownloadModal";
+
+  safeSetHTML(modal, `
+    <div class="modal-content" style="min-width: 300px;">
+      <h2>JSON Download Options</h2>
+      <div style="margin-bottom: 12px; text-align: left;">
+        <label class="json-format-option" style="display:block; margin-bottom: 8px; cursor: pointer; padding: 12px; border-radius: 8px; border: 2px solid #374151; background: #1f2937; transition: all 0.2s ease;">
+          <input type="radio" name="json-format" value="arrayOfObjects" checked /> <strong style="font-size: 16px;">Array of Objects</strong><br/>
+          <small style="color: #9ca3af; margin-left: 24px;">[{"col1":"val"}, ...]</small>
+        </label>
+        <label class="json-format-option" style="display:block; margin-bottom: 8px; cursor: pointer; padding: 12px; border-radius: 8px; border: 2px solid #374151; background: #1f2937; transition: all 0.2s ease;">
+          <input type="radio" name="json-format" value="arrayOfArrays" /> <strong style="font-size: 16px;">2D Array</strong><br/>
+          <small style="color: #9ca3af; margin-left: 24px;">[["col1","col2"], ["val1","val2"]]</small>
+        </label>
+        <label class="json-format-option" style="display:block; margin-bottom: 8px; cursor: pointer; padding: 12px; border-radius: 8px; border: 2px solid #374151; background: #1f2937; transition: all 0.2s ease;">
+          <input type="radio" name="json-format" value="objectOfObjects" /> <strong style="font-size: 16px;">Object of Objects</strong><br/>
+          <small style="color: #9ca3af; margin-left: 24px;">Uses 1st Column as Key (e.g. {"row1": {"col2":"val"}})</small>
+        </label>
+        <label class="json-format-option" style="display:block; margin-bottom: 8px; cursor: pointer; padding: 12px; border-radius: 8px; border: 2px solid #374151; background: #1f2937; transition: all 0.2s ease;">
+          <input type="radio" name="json-format" value="keyValuePairs" /> <strong style="font-size: 16px;">Key-Value Pairs</strong><br/>
+          <small style="color: #9ca3af; margin-left: 24px;">1st Col = Key, 2nd Col = Value (e.g. {"key1":"val1"})</small>
+        </label>
+      </div>
+      <div style="margin-top: 16px; text-align: right;">
+        <button id="json-cancel" style="margin-right: 8px;">Cancel</button>
+        <button id="json-confirm">Download</button>
+      </div>
+    </div>
+  `);
+
+  document.body.appendChild(modal);
+
+  const labels = modal.querySelectorAll('.json-format-option');
+  const updateStyles = () => {
+    labels.forEach(label => {
+      if (label.querySelector('input').checked) {
+        label.style.borderColor = '#00ffcc';
+        label.style.background = 'rgba(0, 255, 204, 0.1)';
+      } else {
+        label.style.borderColor = '#374151';
+        label.style.background = '#1f2937';
+      }
+    });
+  };
+  
+  modal.querySelectorAll('input[name="json-format"]').forEach(input => {
+    input.addEventListener('change', updateStyles);
+  });
+  updateStyles();
+
+  document.getElementById("json-cancel").onclick = () => {
+    modal.remove();
+  };
+
+  document.getElementById("json-confirm").onclick = () => {
+    const format = document.querySelector('input[name="json-format"]:checked').value;
+    extractTableAndDownload(table, 'json', format);
+    modal.remove();
+  };
+
+  return modal;
+};
+
 const createCsvModal = (isJson = false) => {
   const existingModal = document.getElementById("csvUploadModal");
   if (existingModal) existingModal.remove();
@@ -575,7 +689,80 @@ function showBanner(message, type = "success") {
 }
 
 
+
+const parseCSVComplete = (csvText) => {
+  const rows = [];
+  let current = [];
+  let value = '';
+  let insideQuotes = false;
+
+  for (let i = 0; i < csvText.length; i++) {
+    const char = csvText[i];
+    const next = csvText[i + 1];
+
+    if (char === '"' && insideQuotes && next === '"') {
+      value += '"';
+      i++;
+    } else if (char === '"') {
+      insideQuotes = !insideQuotes;
+    } else if (char === ',' && !insideQuotes) {
+      current.push(value);
+      value = '';
+    } else if ((char === '\n' || (char === '\r' && next === '\n')) && !insideQuotes) {
+      if (char === '\r') i++;
+      current.push(value);
+      rows.push(current);
+      current = [];
+      value = '';
+    } else {
+      value += char;
+    }
+  }
+  current.push(value);
+  if (current.length > 1 || current[0] !== '') {
+    rows.push(current);
+  }
+  return rows;
+};
+
+const handleGoogleSheetsExport = async () => {
+  try {
+    const match = window.location.pathname.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    if (!match) throw new Error("Could not find Sheet ID");
+    const sheetId = match[1];
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.replace('#', '?'));
+    const gid = hashParams.get('gid') || urlParams.get('gid') || '0';
+    
+    const exportUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+    
+    showBanner("Fetching sheet data...", "message");
+    const response = await fetch(exportUrl);
+    if (!response.ok) throw new Error("Failed to fetch sheet data");
+    
+    const csvText = await response.text();
+    const data = parseCSVComplete(csvText);
+    
+    const modal = createJsonDownloadModal(null);
+    document.getElementById("json-confirm").onclick = () => {
+      const format = document.querySelector('input[name="json-format"]:checked').value;
+      const jsonContent = formatAsJSON(data, format);
+      downloadBlob(jsonContent, "application/json;charset=utf-8;", "sheets-export.json");
+      modal.remove();
+    };
+  } catch(e) {
+    console.error(e);
+    showBanner("Failed to export Google Sheet: " + e.message, "error");
+  }
+};
+
 const activateTables = () => {
+  if (window.location.hostname === 'docs.google.com') {
+    handleGoogleSheetsExport();
+    return;
+  }
+
   setTimeout(() => {
     onElementRendered("table", (el) => {
       attachCSVDownloadButtons();
