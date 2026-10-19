@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Grid Genie",
-  "version": "2.1",
-  "description": "Upload a CSV/JSON to any table or download any table (or Google Sheet) as a CSV/JSON file.",
+  "version": "2.2",
+  "description": "Download or populate HTML tables & Google Sheets as CSV/JSON, and securely compare CSV & JSON files locally.",
   "permissions": [
     "activeTab"
   ],
@@ -28,6 +28,8 @@
         "<all_urls>"
       ],
       "js": [
+        "js/csvCompare.js",
+        "js/jsonCompare.js",
         "js/content.js"
       ],
       "css": [
