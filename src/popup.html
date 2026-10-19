@@ -57,6 +57,13 @@
           </svg>
           Compare CSVs
         </button>
+        <button id="tab-compare-json" class="gg-tab" role="tab" aria-selected="false">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"></path>
+            <path d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"></path>
+          </svg>
+          Compare JSON
+        </button>
       </nav>
     </header>
 
@@ -87,7 +94,6 @@
 
     <!-- View 2: Secure CSV Comparison & Multi-Column Sort -->
     <section id="view-compare-csv" class="gg-view" style="display: none;">
-      <!-- Dropzones for CSV 1 & CSV 2 -->
       <div class="cmp-dropzones">
         <div
           id="dropzone-a"
@@ -384,7 +390,282 @@
       </div>
     </section>
 
+    <!-- View 3: Secure JSON Comparison & Line-by-Line Multiline String Inspector -->
+    <section id="view-compare-json" class="gg-view" style="display: none;">
+      <div class="cmp-dropzones">
+        <div
+          id="json-dropzone-a"
+          class="cmp-dropzone"
+          tabindex="0"
+          role="button"
+          aria-label="Drop or select Base JSON File 1"
+        >
+          <input
+            type="file"
+            id="json-file-input-a"
+            accept=".json,.jsonl,.txt,application/json,text/plain"
+            hidden
+          />
+          <div class="dz-empty" id="json-dz-empty-a">
+            <div class="dz-icon-circle">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"></path>
+                <path d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"></path>
+              </svg>
+            </div>
+            <div class="dz-title">Base JSON (File 1)</div>
+            <div class="dz-subtitle">Drop JSON file here or click to browse</div>
+            <button type="button" class="dz-paste-btn" id="json-paste-btn-a">
+              Paste JSON Text
+            </button>
+          </div>
+          <div class="dz-loaded" id="json-dz-loaded-a" style="display: none;">
+            <div class="dz-file-header">
+              <span class="dz-badge">JSON 1 • Base</span>
+              <button
+                type="button"
+                class="dz-clear-btn"
+                id="json-clear-file-a"
+                title="Remove JSON 1"
+              >
+                ✕
+              </button>
+            </div>
+            <div class="dz-filename" id="json-filename-a"></div>
+            <div class="dz-meta" id="json-filemeta-a"></div>
+          </div>
+          <div class="dz-paste-box" id="json-paste-box-a" style="display: none;">
+            <textarea
+              id="json-paste-textarea-a"
+              rows="3"
+              placeholder='Paste JSON 1 here (e.g. {"key": "line1\nline2"})...'
+            ></textarea>
+            <div class="dz-paste-actions">
+              <button type="button" class="gg-small-btn ghost" id="json-paste-cancel-a">
+                Cancel
+              </button>
+              <button type="button" class="gg-small-btn" id="json-paste-apply-a">
+                Load JSON
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div
+          id="json-dropzone-b"
+          class="cmp-dropzone"
+          tabindex="0"
+          role="button"
+          aria-label="Drop or select Comparison JSON File 2"
+        >
+          <input
+            type="file"
+            id="json-file-input-b"
+            accept=".json,.jsonl,.txt,application/json,text/plain"
+            hidden
+          />
+          <div class="dz-empty" id="json-dz-empty-b">
+            <div class="dz-icon-circle accent-blue">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"></path>
+                <path d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"></path>
+              </svg>
+            </div>
+            <div class="dz-title">Compare JSON (File 2)</div>
+            <div class="dz-subtitle">Drop JSON file here or click to browse</div>
+            <button type="button" class="dz-paste-btn" id="json-paste-btn-b">
+              Paste JSON Text
+            </button>
+          </div>
+          <div class="dz-loaded" id="json-dz-loaded-b" style="display: none;">
+            <div class="dz-file-header">
+              <span class="dz-badge badge-b">JSON 2 • Compare</span>
+              <button
+                type="button"
+                class="dz-clear-btn"
+                id="json-clear-file-b"
+                title="Remove JSON 2"
+              >
+                ✕
+              </button>
+            </div>
+            <div class="dz-filename" id="json-filename-b"></div>
+            <div class="dz-meta" id="json-filemeta-b"></div>
+          </div>
+          <div class="dz-paste-box" id="json-paste-box-b" style="display: none;">
+            <textarea
+              id="json-paste-textarea-b"
+              rows="3"
+              placeholder='Paste JSON 2 here (e.g. {"key": "line1\nchanged"})...'
+            ></textarea>
+            <div class="dz-paste-actions">
+              <button type="button" class="gg-small-btn ghost" id="json-paste-cancel-b">
+                Cancel
+              </button>
+              <button type="button" class="gg-small-btn" id="json-paste-apply-b">
+                Load JSON
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        id="json-error-banner"
+        class="cmp-error-banner"
+        style="display: none;"
+        role="alert"
+      ></div>
+
+      <!-- JSON Comparison Options & Sorting -->
+      <div class="cmp-config-panel">
+        <div class="cmp-options-row" style="border-bottom: none; padding-bottom: 0;">
+          <div class="cmp-toggles-group">
+            <label class="cmp-checkbox-label">
+              <input type="checkbox" id="json-trim-values" />
+              <span>Trim whitespace</span>
+            </label>
+            <label class="cmp-checkbox-label">
+              <input type="checkbox" id="json-case-sensitive" checked />
+              <span>Case-sensitive</span>
+            </label>
+          </div>
+
+          <div class="cmp-match-mode-group">
+            <label for="json-sort-by">Sort</label>
+            <select id="json-sort-by" class="gg-select">
+              <option value="original">Original Key Order</option>
+              <option value="path-asc">Key / Path (A → Z)</option>
+              <option value="path-desc">Key / Path (Z → A)</option>
+              <option value="status">Status (Modified first)</option>
+              <option value="val-a-asc">File 1 Value (A → Z)</option>
+              <option value="val-b-asc">File 2 Value (A → Z)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- JSON Comparison Results -->
+      <div
+        id="json-results-section"
+        class="cmp-results-section"
+        style="display: none;"
+      >
+        <div class="cmp-toolbar">
+          <div
+            class="cmp-filters"
+            id="json-filter-group"
+            role="group"
+            aria-label="Filter JSON rows"
+          >
+            <button
+              type="button"
+              class="cmp-filter-btn active"
+              data-filter="all"
+              id="json-filter-all"
+            >
+              All (0)
+            </button>
+            <button
+              type="button"
+              class="cmp-filter-btn"
+              data-filter="differences"
+              id="json-filter-differences"
+            >
+              Differences (0)
+            </button>
+            <button
+              type="button"
+              class="cmp-filter-btn mod"
+              data-filter="modified"
+              id="json-filter-modified"
+            >
+              Modified (0)
+            </button>
+            <button
+              type="button"
+              class="cmp-filter-btn add"
+              data-filter="added"
+              id="json-filter-added"
+            >
+              Added (0)
+            </button>
+            <button
+              type="button"
+              class="cmp-filter-btn rem"
+              data-filter="removed"
+              id="json-filter-removed"
+            >
+              Removed (0)
+            </button>
+            <button
+              type="button"
+              class="cmp-filter-btn"
+              data-filter="unchanged"
+              id="json-filter-unchanged"
+            >
+              Unchanged (0)
+            </button>
+          </div>
+
+          <div class="cmp-actions">
+            <button type="button" id="export-json-csv-btn" class="gg-small-btn">
+              Export CSV
+            </button>
+            <button
+              type="button"
+              id="export-json-diff-btn"
+              class="gg-small-btn ghost"
+              title="Download full JSON comparison summary report"
+            >
+              Summary JSON
+            </button>
+            <button
+              type="button"
+              id="wipe-json-data-btn"
+              class="gg-small-btn danger"
+              title="Immediately overwrite and clear all JSON data from memory"
+            >
+              Clear Data
+            </button>
+          </div>
+        </div>
+
+        <div
+          id="json-identical-banner"
+          class="cmp-identical-banner"
+          style="display: none;"
+        >
+          Both JSON payloads are 100% identical under the current comparison settings.
+        </div>
+
+        <div class="cmp-table-container">
+          <table id="json-diff-table" class="cmp-diff-table">
+            <thead>
+              <tr>
+                <th style="width: 34%;">Key / Path</th>
+                <th style="width: 95px;">Status</th>
+                <th>Value (File 1 → File 2)</th>
+              </tr>
+            </thead>
+            <tbody id="json-diff-tbody"></tbody>
+          </table>
+        </div>
+        <div
+          id="json-pagination-bar"
+          class="cmp-pagination-bar"
+          style="display: none;"
+        >
+          <span id="json-showing-count"></span>
+          <button type="button" id="json-load-more-btn" class="gg-small-btn ghost">
+            Show More Rows
+          </button>
+        </div>
+      </div>
+    </section>
+
     <script src="js/csvCompare.js"></script>
+    <script src="js/jsonCompare.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

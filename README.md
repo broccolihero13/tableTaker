@@ -3,9 +3,9 @@
 [![Available in the Chrome Web Store](https://img.shields.io/chrome-web-store/v/oknhgchlehbbfohkgiijgdhefjeilipl.svg)](https://chrome.google.com/webstore/detail/oknhgchlehbbfohkgiijgdhefjeilipl)
 [![Available for Firefox](https://img.shields.io/amo/v/grid-genie.svg)](https://addons.mozilla.org/en-US/firefox/addon/grid-genie/)
 
-Grid Genie allows you to **download any table on the page as a CSV/JSON**, **upload a CSV/JSON to populate table forms**, and **securely compare & multi-column sort two CSV files locally**.
+Grid Genie allows you to **download any table on the page as a CSV/JSON**, **upload a CSV/JSON to populate table forms**, and **securely compare CSV & JSON files locally**.
 
-It works with many form-based tables and sensitive datasets, making repetitive data entry and CSV diffing faster and less error-prone.
+It works with many form-based tables and sensitive datasets, making repetitive data entry and CSV/JSON diffing faster and less error-prone.
 
 ---
 
@@ -20,6 +20,10 @@ It works with many form-based tables and sensitive datasets, making repetitive d
   - Filter by `All`, `Differences`, `Modified`, `Added`, `Removed`, or `Unchanged`
   - Export filtered comparison results to CSV with **Safe Export** formula-injection sanitization
 - ✅ **Multi-Column Sorting**: sort CSV data by any sequence of columns (e.g., Primary sort by `Column B`, Secondary sort by `Column C`, Tertiary sort by `Column D`, etc.) with ascending/descending and type-aware numeric sorting
+- ✅ **Secure Deep JSON Comparison (Unified Table View)**:
+  - Compare any two JSON files or pasted JSON values (deep nested objects, key-value maps, and arrays) in a clean comparison table matching the CSV Compare layout
+  - **Line-by-Line Multiline String Expansion**: automatically expands multiline string values (`\n`) into individual table rows (`key [Line 1]`, `key [Line 2]`, ...) so every line is compared side-by-side in the same default table
+  - Export the comparison table as a sanitized **CSV** (`Export CSV`) or download a full **Summary JSON** report (`Summary JSON`)
 - ✅ Intelligently populates `input`, `textarea`, `select` (dropdowns), and `checkbox` fields
 - ✅ React, Vue, and modern JS framework compatibility via native event dispatching
 - ✅ **Security-first design**: no data is stored or transmitted — everything runs in volatile local memory and is wiped on popup close or via the **Clear Data** button
@@ -74,7 +78,7 @@ The easiest way to install Grid Genie is directly from **[Firefox Add-ons](https
 
 ## 🧪 Running Tests
 
-Grid Genie uses **Jest** for unit testing to ensure CSV comparison, multi-column sorting, data parsing, security sanitization, and DOM manipulation stay robust.
+Grid Genie uses **Jest** for unit testing to ensure CSV/JSON comparison, multi-column sorting, line-by-line multiline diffing, security sanitization, and DOM manipulation stay robust.
 
 1. Install dependencies: `npm install`
 2. Run the test suite: `npm test`
@@ -88,17 +92,19 @@ Grid Genie uses **Jest** for unit testing to ensure CSV comparison, multi-column
   ├── 📁 js/
   │   ├── content.js         ← Page table extraction, formatters, and DOM injection
   │   ├── csvCompare.js      ← Secure CSV parser, multi-column sorter, and diff engine
+  │   ├── jsonCompare.js     ← Deep JSON comparison & line-by-line multiline string diff engine
   │   └── background.js      ← Extension service worker
   ├── 📁 css/
   │   └── add.css            ← Styling for in-page table buttons and modals
   ├── 📁 images/
   │   └── icon*.png          ← Extension icons
-  ├── popup.html             ← Popup interface (Table Tools & Compare CSVs)
+  ├── popup.html             ← Popup interface (Table Tools, Compare CSVs, Compare JSON)
   ├── popup.css              ← Modern dark-theme popup stylesheet
   └── popup.js               ← Popup controller & XSS-safe diff renderer
 📁 tests/
   ├── content.test.js        ← Unit tests for DOM table extraction & formatters
-  └── csvCompare.test.js     ← Unit & security tests for CSV compare, sorting, and XSS/formula protection
+  ├── csvCompare.test.js     ← Unit & security tests for CSV compare, sorting, and formula protection
+  └── jsonCompare.test.js    ← Unit & security tests for deep JSON compare & multiline string diffs
 📁 scripts/
   └── build.js               ← Cross-browser build script for Chrome & Firefox
 manifest.chrome.json         ← Chrome Manifest V3 configuration

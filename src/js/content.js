@@ -792,6 +792,7 @@ const deactivateTables = () => {
 
 if (typeof module !== 'undefined' && module.exports) {
   const compareExports = require('./csvCompare.js');
+  const jsonCompareExports = require('./jsonCompare.js');
   module.exports = {
     parseCSVLine,
     parseCSVComplete,
@@ -801,7 +802,8 @@ if (typeof module !== 'undefined' && module.exports) {
     formatAsTSV,
     setInputValue,
     setTextareaValue,
-    ...compareExports
+    ...compareExports,
+    ...jsonCompareExports
   };
 }
 

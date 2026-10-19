@@ -11,6 +11,13 @@ const CompareEngine =
     ? require("./js/csvCompare.js")
     : null;
 
+const JSONCompareEngine =
+  typeof window !== "undefined" && window.GridGenieJSONCompare
+    ? window.GridGenieJSONCompare
+    : typeof require !== "undefined"
+    ? require("./js/jsonCompare.js")
+    : null;
+
 const PAGE_SIZE = 250;
 
 // Volatile in-memory state only (never persisted to storage)
@@ -23,6 +30,17 @@ const compareState = {
   matchMode: "row", // 'row' | 'key'
   keyColumns: [0], // 0-based column indices
   sortRules: [], // [{ column: number, direction: 'asc' | 'desc' }]
+  activeFilter: "all",
+  visibleLimit: PAGE_SIZE,
+  comparisonResult: null,
+};
+
+const jsonCompareState = {
+  fileA: { name: "", rawText: "", parsed: undefined, keyCount: 0 },
+  fileB: { name: "", rawText: "", parsed: undefined, keyCount: 0 },
+  trimValues: false,
+  caseSensitive: true,
+  sortBy: "original",
   activeFilter: "all", // 'all' | 'differences' | 'modified' | 'added' | 'removed' | 'unchanged'
   visibleLimit: PAGE_SIZE,
   comparisonResult: null,
@@ -31,44 +49,53 @@ const compareState = {
 document.addEventListener("DOMContentLoaded", () => {
   initNavigationTabs();
   initCompareCSVUI();
+  initCompareJSONUI();
   initTableToolsTab();
 
-  // Automatically wipe sensitive CSV data from memory when the popup closes
-  window.addEventListener("pagehide", wipeAllSensitiveData);
-  window.addEventListener("beforeunload", wipeAllSensitiveData);
-  window.addEventListener("unload", wipeAllSensitiveData);
+  // Automatically wipe sensitive CSV & JSON data from memory when the popup closes
+  const wipeAll = () => {
+    wipeAllSensitiveData();
+    wipeAllSensitiveJSONData();
+  };
+  window.addEventListener("pagehide", wipeAll);
+  window.addEventListener("beforeunload", wipeAll);
+  window.addEventListener("unload", wipeAll);
 });
 
 function initNavigationTabs() {
   const tabTable = document.getElementById("tab-table-tools");
-  const tabCompare = document.getElementById("tab-compare-csv");
+  const tabCompareCSV = document.getElementById("tab-compare-csv");
+  const tabCompareJSON = document.getElementById("tab-compare-json");
   const viewTable = document.getElementById("view-table-tools");
-  const viewCompare = document.getElementById("view-compare-csv");
+  const viewCompareCSV = document.getElementById("view-compare-csv");
+  const viewCompareJSON = document.getElementById("view-compare-json");
 
-  if (!tabTable || !tabCompare || !viewTable || !viewCompare) return;
+  if (!tabTable || !tabCompareCSV || !viewTable || !viewCompareCSV) return;
 
   const switchTab = (mode) => {
-    if (mode === "compare") {
-      document.body.classList.add("compare-mode");
-      tabCompare.classList.add("active");
-      tabCompare.setAttribute("aria-selected", "true");
-      tabTable.classList.remove("active");
-      tabTable.setAttribute("aria-selected", "false");
-      viewCompare.style.display = "block";
-      viewTable.style.display = "none";
-    } else {
-      document.body.classList.remove("compare-mode");
-      tabTable.classList.add("active");
-      tabTable.setAttribute("aria-selected", "true");
-      tabCompare.classList.remove("active");
-      tabCompare.setAttribute("aria-selected", "false");
-      viewTable.style.display = "block";
-      viewCompare.style.display = "none";
+    const isExpanded = mode === "compare-csv" || mode === "compare-json";
+    document.body.classList.toggle("compare-mode", isExpanded);
+
+    tabTable.classList.toggle("active", mode === "table");
+    tabTable.setAttribute("aria-selected", String(mode === "table"));
+    viewTable.style.display = mode === "table" ? "block" : "none";
+
+    tabCompareCSV.classList.toggle("active", mode === "compare-csv");
+    tabCompareCSV.setAttribute("aria-selected", String(mode === "compare-csv"));
+    viewCompareCSV.style.display = mode === "compare-csv" ? "block" : "none";
+
+    if (tabCompareJSON && viewCompareJSON) {
+      tabCompareJSON.classList.toggle("active", mode === "compare-json");
+      tabCompareJSON.setAttribute("aria-selected", String(mode === "compare-json"));
+      viewCompareJSON.style.display = mode === "compare-json" ? "block" : "none";
     }
   };
 
   tabTable.addEventListener("click", () => switchTab("table"));
-  tabCompare.addEventListener("click", () => switchTab("compare"));
+  tabCompareCSV.addEventListener("click", () => switchTab("compare-csv"));
+  if (tabCompareJSON) {
+    tabCompareJSON.addEventListener("click", () => switchTab("compare-json"));
+  }
 }
 
 function initTableToolsTab() {
@@ -119,7 +146,7 @@ const showUnavailableMessage = () => {
     heading.textContent = "Table Tools Unavailable";
     const msg = document.createElement("p");
     msg.textContent =
-      "Browser security restricts page injection on this tab. You can still use the Compare CSVs tab above.";
+      "Browser security restricts page injection on this tab. You can still use the Compare CSVs and Compare JSON tabs above.";
     statusEl.appendChild(heading);
     statusEl.appendChild(msg);
   }
@@ -254,7 +281,6 @@ function initCompareCSVUI() {
     addSortBtn.addEventListener("click", () => {
       const colMeta = getAvailableColumnsMeta();
       const totalCols = colMeta.length || 26;
-      // Pick the first column not already in sortRules, or default to 0
       const usedCols = new Set(compareState.sortRules.map((r) => r.column));
       let nextCol = 0;
       for (let i = 0; i < totalCols; i++) {
@@ -357,7 +383,6 @@ function setupDropzone(slot) {
     const files = e.dataTransfer && e.dataTransfer.files ? Array.from(e.dataTransfer.files) : [];
     if (files.length === 0) return;
 
-    // Convenience: if user drops 2 CSV files at once, load into File 1 and File 2
     if (files.length >= 2) {
       readAndLoadCSVFile(files[0], "a");
       readAndLoadCSVFile(files[1], "b");
@@ -449,7 +474,6 @@ function loadCSVTextIntoSlot(rawText, fileName, slot) {
     }
 
     const target = slot === "a" ? compareState.fileA : compareState.fileB;
-    // Clear any previous data in this slot before replacing
     clearSlotMemory(target);
 
     target.name = fileName;
@@ -522,7 +546,6 @@ function getAvailableColumnsMeta() {
   for (const r of rowsB) if (r.length > maxCols) maxCols = r.length;
 
   if (maxCols === 0) {
-    // Provide default A..H columns before files are dropped so users can pre-configure sort if desired
     return Array.from({ length: 8 }, (_, idx) => {
       const letter = CompareEngine.indexToColumnLetter(idx);
       return { index: idx, letter, label: `Column ${letter}` };
@@ -646,7 +669,6 @@ function renderKeyColumnPills() {
   container.textContent = "";
 
   const colMeta = getAvailableColumnsMeta();
-  // Ensure at least one valid key column is selected
   compareState.keyColumns = compareState.keyColumns.filter((c) => c >= 0 && c < colMeta.length);
   if (compareState.keyColumns.length === 0 && colMeta.length > 0) {
     compareState.keyColumns = [0];
@@ -754,7 +776,6 @@ function renderDiffTable() {
 
   const { headers, diffRows } = compareState.comparisonResult;
 
-  // Build table header row using safe DOM creation
   const headerTr = document.createElement("tr");
 
   const thRowNum = document.createElement("th");
@@ -784,7 +805,6 @@ function renderDiffTable() {
 
   thead.appendChild(headerTr);
 
-  // Filter rows
   const filter = compareState.activeFilter;
   const filtered = diffRows.filter((row) => {
     if (filter === "all") return true;
@@ -814,7 +834,6 @@ function renderDiffTable() {
     const tr = document.createElement("tr");
     tr.className = `cmp-row-${row.status}`;
 
-    // Row numbers cell
     const tdRowNum = document.createElement("td");
     tdRowNum.className = "cmp-rownum-cell";
     const rA = row.rowNumberA !== null ? String(row.rowNumberA) : "—";
@@ -822,7 +841,6 @@ function renderDiffTable() {
     tdRowNum.textContent = `${rA} / ${rB}`;
     tr.appendChild(tdRowNum);
 
-    // Status pill cell
     const tdStatus = document.createElement("td");
     const pill = document.createElement("span");
     pill.className = `cmp-status-pill cmp-status-${row.status}`;
@@ -837,7 +855,6 @@ function renderDiffTable() {
     tdStatus.appendChild(pill);
     tr.appendChild(tdStatus);
 
-    // Data cells (100% XSS-safe via textContent)
     row.cells.forEach((cell) => {
       const td = document.createElement("td");
       if (cell.status === "modified") {
@@ -912,7 +929,6 @@ function handleExportComparison() {
   link.download = "csv-comparison-report.csv";
   link.click();
 
-  // Revoke object URL promptly so sensitive blob data does not remain in memory
   setTimeout(() => {
     URL.revokeObjectURL(url);
   }, 1000);
@@ -986,3 +1002,529 @@ function wipeAllSensitiveData() {
 
   refreshColumnSelectorsAndCompare();
 }
+
+/* ==========================================================================
+   Secure JSON Comparison UI Logic (Unified Table View including Multilines)
+   ========================================================================== */
+
+function showJSONCompareError(message) {
+  const banner = document.getElementById("json-error-banner");
+  if (!banner) return;
+  if (!message) {
+    banner.style.display = "none";
+    banner.textContent = "";
+    return;
+  }
+  banner.textContent = message;
+  banner.style.display = "block";
+}
+
+function initCompareJSONUI() {
+  if (!JSONCompareEngine) return;
+
+  setupJSONDropzone("a");
+  setupJSONDropzone("b");
+
+  const trimCheck = document.getElementById("json-trim-values");
+  const caseCheck = document.getElementById("json-case-sensitive");
+  const sortSelect = document.getElementById("json-sort-by");
+  const filterGroup = document.getElementById("json-filter-group");
+  const exportCsvBtn = document.getElementById("export-json-csv-btn");
+  const exportJsonBtn = document.getElementById("export-json-diff-btn");
+  const wipeBtn = document.getElementById("wipe-json-data-btn");
+  const loadMoreBtn = document.getElementById("json-load-more-btn");
+
+  if (trimCheck) {
+    trimCheck.addEventListener("change", () => {
+      jsonCompareState.trimValues = trimCheck.checked;
+      runJSONComparisonIfReady();
+    });
+  }
+
+  if (caseCheck) {
+    caseCheck.addEventListener("change", () => {
+      jsonCompareState.caseSensitive = caseCheck.checked;
+      runJSONComparisonIfReady();
+    });
+  }
+
+  if (sortSelect) {
+    sortSelect.addEventListener("change", () => {
+      jsonCompareState.sortBy = sortSelect.value || "original";
+      runJSONComparisonIfReady();
+    });
+  }
+
+  if (filterGroup) {
+    filterGroup.addEventListener("click", (e) => {
+      const btn = e.target.closest(".cmp-filter-btn");
+      if (!btn) return;
+      const filter = btn.getAttribute("data-filter");
+      if (!filter) return;
+      jsonCompareState.activeFilter = filter;
+      jsonCompareState.visibleLimit = PAGE_SIZE;
+
+      filterGroup.querySelectorAll(".cmp-filter-btn").forEach((b) => {
+        b.classList.toggle("active", b === btn);
+      });
+      renderJSONDiffTable();
+    });
+  }
+
+  if (exportCsvBtn) {
+    exportCsvBtn.addEventListener("click", handleExportJSONAsCSV);
+  }
+
+  if (exportJsonBtn) {
+    exportJsonBtn.addEventListener("click", handleExportJSONComparison);
+  }
+
+  if (wipeBtn) {
+    wipeBtn.addEventListener("click", () => {
+      wipeAllSensitiveJSONData();
+      showJSONCompareError("");
+    });
+  }
+
+  if (loadMoreBtn) {
+    loadMoreBtn.addEventListener("click", () => {
+      jsonCompareState.visibleLimit += PAGE_SIZE;
+      renderJSONDiffTable();
+    });
+  }
+}
+
+function setupJSONDropzone(slot) {
+  const dropzone = document.getElementById(`json-dropzone-${slot}`);
+  const fileInput = document.getElementById(`json-file-input-${slot}`);
+  const clearBtn = document.getElementById(`json-clear-file-${slot}`);
+  const pasteBtn = document.getElementById(`json-paste-btn-${slot}`);
+  const pasteBox = document.getElementById(`json-paste-box-${slot}`);
+  const pasteTextarea = document.getElementById(`json-paste-textarea-${slot}`);
+  const pasteApply = document.getElementById(`json-paste-apply-${slot}`);
+  const pasteCancel = document.getElementById(`json-paste-cancel-${slot}`);
+  const emptyView = document.getElementById(`json-dz-empty-${slot}`);
+
+  if (!dropzone || !fileInput) return;
+
+  dropzone.addEventListener("click", (e) => {
+    if (
+      e.target.closest(".dz-clear-btn") ||
+      e.target.closest(".dz-paste-btn") ||
+      e.target.closest(".dz-paste-box")
+    ) {
+      return;
+    }
+    fileInput.click();
+  });
+
+  dropzone.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      if (e.target === dropzone) {
+        e.preventDefault();
+        fileInput.click();
+      }
+    }
+  });
+
+  dropzone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropzone.classList.add("drag-over");
+  });
+
+  dropzone.addEventListener("dragleave", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropzone.classList.remove("drag-over");
+  });
+
+  dropzone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropzone.classList.remove("drag-over");
+
+    const files = e.dataTransfer && e.dataTransfer.files ? Array.from(e.dataTransfer.files) : [];
+    if (files.length === 0) return;
+
+    if (files.length >= 2) {
+      readAndLoadJSONFile(files[0], "a");
+      readAndLoadJSONFile(files[1], "b");
+    } else {
+      readAndLoadJSONFile(files[0], slot);
+    }
+  });
+
+  fileInput.addEventListener("change", () => {
+    if (fileInput.files && fileInput.files.length > 0) {
+      readAndLoadJSONFile(fileInput.files[0], slot);
+    }
+  });
+
+  if (clearBtn) {
+    clearBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      clearSingleJSONFile(slot);
+    });
+  }
+
+  if (pasteBtn && pasteBox && emptyView && pasteTextarea) {
+    pasteBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      emptyView.style.display = "none";
+      pasteBox.style.display = "block";
+      pasteTextarea.focus();
+    });
+  }
+
+  if (pasteCancel && pasteBox && emptyView && pasteTextarea) {
+    pasteCancel.addEventListener("click", (e) => {
+      e.stopPropagation();
+      pasteTextarea.value = "";
+      pasteBox.style.display = "none";
+      emptyView.style.display = "block";
+    });
+  }
+
+  if (pasteApply && pasteBox && emptyView && pasteTextarea) {
+    pasteApply.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const raw = pasteTextarea.value;
+      pasteTextarea.value = "";
+      pasteBox.style.display = "none";
+      if (!raw || !raw.trim()) {
+        emptyView.style.display = "block";
+        return;
+      }
+      loadJSONTextIntoSlot(
+        raw,
+        slot === "a" ? "Pasted JSON 1.json" : "Pasted JSON 2.json",
+        slot
+      );
+    });
+  }
+}
+
+function readAndLoadJSONFile(file, slot) {
+  showJSONCompareError("");
+  const validation = JSONCompareEngine.validateJSONFile(file);
+  if (!validation.valid) {
+    showJSONCompareError(validation.error);
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const text = typeof ev.target.result === "string" ? ev.target.result : "";
+    loadJSONTextIntoSlot(text, file.name, slot);
+  };
+  reader.onerror = () => {
+    showJSONCompareError(`Failed to read file "${file.name}".`);
+  };
+  reader.readAsText(file);
+}
+
+function loadJSONTextIntoSlot(rawText, fileName, slot) {
+  try {
+    showJSONCompareError("");
+    const parsed = JSONCompareEngine.parseJSONRobust(rawText);
+    const map = JSONCompareEngine.flattenJSONToMap(parsed);
+
+    const target = slot === "a" ? jsonCompareState.fileA : jsonCompareState.fileB;
+    clearJSONSlotMemory(target);
+
+    target.name = fileName;
+    target.rawText = rawText;
+    target.parsed = parsed;
+    target.keyCount = map.size;
+
+    updateJSONDropzoneDisplay(slot);
+    runJSONComparisonIfReady();
+  } catch (err) {
+    showJSONCompareError(err.message || "Failed to parse JSON content.");
+  }
+}
+
+function updateJSONDropzoneDisplay(slot) {
+  const target = slot === "a" ? jsonCompareState.fileA : jsonCompareState.fileB;
+  const emptyEl = document.getElementById(`json-dz-empty-${slot}`);
+  const loadedEl = document.getElementById(`json-dz-loaded-${slot}`);
+  const pasteBox = document.getElementById(`json-paste-box-${slot}`);
+  const nameEl = document.getElementById(`json-filename-${slot}`);
+  const metaEl = document.getElementById(`json-filemeta-${slot}`);
+
+  if (pasteBox) pasteBox.style.display = "none";
+
+  if (target.parsed === undefined && !target.rawText) {
+    if (emptyEl) emptyEl.style.display = "block";
+    if (loadedEl) loadedEl.style.display = "none";
+    if (nameEl) nameEl.textContent = "";
+    if (metaEl) metaEl.textContent = "";
+    return;
+  }
+
+  if (emptyEl) emptyEl.style.display = "none";
+  if (loadedEl) loadedEl.style.display = "block";
+
+  if (nameEl) nameEl.textContent = target.name;
+  if (metaEl) {
+    metaEl.textContent = `${target.keyCount} key${target.keyCount === 1 ? "" : "s"}`;
+  }
+}
+
+function runJSONComparisonIfReady() {
+  const hasA = jsonCompareState.fileA.parsed !== undefined || Boolean(jsonCompareState.fileA.rawText);
+  const hasB = jsonCompareState.fileB.parsed !== undefined || Boolean(jsonCompareState.fileB.rawText);
+  const resultsSection = document.getElementById("json-results-section");
+
+  if (!hasA || !hasB) {
+    if (resultsSection) resultsSection.style.display = "none";
+    return;
+  }
+
+  try {
+    if (jsonCompareState.comparisonResult) {
+      JSONCompareEngine.wipeJSONComparisonData(jsonCompareState.comparisonResult);
+    }
+
+    jsonCompareState.comparisonResult = JSONCompareEngine.compareJSON(
+      jsonCompareState.fileA.parsed,
+      jsonCompareState.fileB.parsed,
+      {
+        trimValues: jsonCompareState.trimValues,
+        caseSensitive: jsonCompareState.caseSensitive,
+        sortBy: jsonCompareState.sortBy,
+      }
+    );
+
+    jsonCompareState.visibleLimit = PAGE_SIZE;
+
+    if (resultsSection) resultsSection.style.display = "block";
+    updateJSONFilterCounts();
+    renderJSONDiffTable();
+  } catch (err) {
+    showJSONCompareError(err.message || "JSON comparison failed.");
+  }
+}
+
+function updateJSONFilterCounts() {
+  if (!jsonCompareState.comparisonResult) return;
+  const { summary } = jsonCompareState.comparisonResult;
+  const diffs = summary.modified + summary.added + summary.removed;
+
+  const setBtnText = (id, label, count) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = `${label} (${count})`;
+  };
+
+  setBtnText("json-filter-all", "All", summary.totalKeys);
+  setBtnText("json-filter-differences", "Differences", diffs);
+  setBtnText("json-filter-modified", "Modified", summary.modified);
+  setBtnText("json-filter-added", "Added", summary.added);
+  setBtnText("json-filter-removed", "Removed", summary.removed);
+  setBtnText("json-filter-unchanged", "Unchanged", summary.unchanged);
+
+  const identicalBanner = document.getElementById("json-identical-banner");
+  if (identicalBanner) {
+    identicalBanner.style.display = summary.identical ? "block" : "none";
+  }
+}
+
+function renderJSONDiffTable() {
+  const tbody = document.getElementById("json-diff-tbody");
+  const paginationBar = document.getElementById("json-pagination-bar");
+  const showingCount = document.getElementById("json-showing-count");
+  const loadMoreBtn = document.getElementById("json-load-more-btn");
+
+  if (!tbody || !jsonCompareState.comparisonResult) return;
+  tbody.textContent = "";
+
+  const { entries } = jsonCompareState.comparisonResult;
+  const filter = jsonCompareState.activeFilter;
+
+  const filtered = entries.filter((entry) => {
+    if (filter === "all") return true;
+    if (filter === "differences") return entry.status !== "unchanged";
+    return entry.status === filter;
+  });
+
+  if (filtered.length === 0) {
+    const emptyTr = document.createElement("tr");
+    const emptyTd = document.createElement("td");
+    emptyTd.colSpan = 3;
+    emptyTd.style.textAlign = "center";
+    emptyTd.style.padding = "18px";
+    emptyTd.style.color = "#94a3b8";
+    emptyTd.textContent = "No rows match the selected filter.";
+    emptyTr.appendChild(emptyTd);
+    tbody.appendChild(emptyTr);
+    if (paginationBar) paginationBar.style.display = "none";
+    return;
+  }
+
+  const sliceEnd = Math.min(filtered.length, jsonCompareState.visibleLimit);
+  const fragment = document.createDocumentFragment();
+
+  for (let i = 0; i < sliceEnd; i++) {
+    const entry = filtered[i];
+    const tr = document.createElement("tr");
+    tr.className = `cmp-row-${entry.status}`;
+
+    const tdPath = document.createElement("td");
+    tdPath.className = "json-path-cell";
+    tdPath.textContent = entry.path;
+    tr.appendChild(tdPath);
+
+    const tdStatus = document.createElement("td");
+    const pill = document.createElement("span");
+    pill.className = `cmp-status-pill cmp-status-${entry.status}`;
+    pill.textContent =
+      entry.status === "unchanged"
+        ? "Match"
+        : entry.status === "modified"
+        ? "~ Modified"
+        : entry.status === "added"
+        ? "+ Added"
+        : "- Removed";
+    tdStatus.appendChild(pill);
+    tr.appendChild(tdStatus);
+
+    const tdVal = document.createElement("td");
+    if (entry.status === "modified") {
+      tdVal.className = "cmp-cell-modified";
+
+      const oldSpan = document.createElement("span");
+      oldSpan.className = "diff-old-val";
+      oldSpan.textContent = entry.valueA !== "" ? entry.valueA : "(empty)";
+
+      const arrowSpan = document.createElement("span");
+      arrowSpan.className = "diff-arrow";
+      arrowSpan.textContent = "→";
+
+      const newSpan = document.createElement("span");
+      newSpan.className = "diff-new-val";
+      newSpan.textContent = entry.valueB !== "" ? entry.valueB : "(empty)";
+
+      tdVal.appendChild(oldSpan);
+      tdVal.appendChild(arrowSpan);
+      tdVal.appendChild(newSpan);
+    } else if (entry.status === "removed") {
+      tdVal.textContent = entry.valueA;
+    } else {
+      tdVal.textContent = entry.valueB !== "" ? entry.valueB : entry.valueA;
+    }
+
+    tr.appendChild(tdVal);
+    fragment.appendChild(tr);
+  }
+
+  tbody.appendChild(fragment);
+
+  if (paginationBar && showingCount && loadMoreBtn) {
+    if (filtered.length > PAGE_SIZE) {
+      paginationBar.style.display = "flex";
+      showingCount.textContent = `Showing ${sliceEnd} of ${filtered.length} rows`;
+      loadMoreBtn.style.display = sliceEnd < filtered.length ? "inline-block" : "none";
+    } else {
+      paginationBar.style.display = "none";
+    }
+  }
+}
+
+function handleExportJSONAsCSV() {
+  if (!jsonCompareState.comparisonResult) return;
+
+  const csvStr = JSONCompareEngine.exportJSONComparisonCSV(
+    jsonCompareState.comparisonResult,
+    { filter: jsonCompareState.activeFilter, sanitizeFormulas: true }
+  );
+
+  const blob = new Blob([csvStr], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "json-comparison-table.csv";
+  link.click();
+
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 1000);
+}
+
+function handleExportJSONComparison() {
+  if (!jsonCompareState.comparisonResult) return;
+
+  const reportStr = JSONCompareEngine.exportJSONComparisonReport(
+    jsonCompareState.comparisonResult,
+    { filter: jsonCompareState.activeFilter }
+  );
+
+  const blob = new Blob([reportStr], { type: "application/json;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "json-comparison-summary.json";
+  link.click();
+
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 1000);
+}
+
+function clearJSONSlotMemory(slotObj) {
+  if (!slotObj) return;
+  slotObj.name = "";
+  slotObj.rawText = "";
+  slotObj.parsed = undefined;
+  slotObj.keyCount = 0;
+}
+
+function clearSingleJSONFile(slot) {
+  const target = slot === "a" ? jsonCompareState.fileA : jsonCompareState.fileB;
+  clearJSONSlotMemory(target);
+
+  const fileInput = document.getElementById(`json-file-input-${slot}`);
+  if (fileInput) fileInput.value = "";
+
+  const textarea = document.getElementById(`json-paste-textarea-${slot}`);
+  if (textarea) textarea.value = "";
+
+  if (jsonCompareState.comparisonResult) {
+    JSONCompareEngine.wipeJSONComparisonData(jsonCompareState.comparisonResult);
+    jsonCompareState.comparisonResult = null;
+  }
+
+  const tbody = document.getElementById("json-diff-tbody");
+  if (tbody) tbody.textContent = "";
+
+  updateJSONDropzoneDisplay("a");
+  updateJSONDropzoneDisplay("b");
+  runJSONComparisonIfReady();
+}
+
+function wipeAllSensitiveJSONData() {
+  clearJSONSlotMemory(jsonCompareState.fileA);
+  clearJSONSlotMemory(jsonCompareState.fileB);
+
+  if (jsonCompareState.comparisonResult && JSONCompareEngine) {
+    JSONCompareEngine.wipeJSONComparisonData(jsonCompareState.comparisonResult);
+    jsonCompareState.comparisonResult = null;
+  }
+
+  for (const slot of ["a", "b"]) {
+    const fileInput = document.getElementById(`json-file-input-${slot}`);
+    if (fileInput) fileInput.value = "";
+    const textarea = document.getElementById(`json-paste-textarea-${slot}`);
+    if (textarea) textarea.value = "";
+  }
+
+  const tbody = document.getElementById("json-diff-tbody");
+  if (tbody) tbody.textContent = "";
+
+  const resultsSection = document.getElementById("json-results-section");
+  if (resultsSection) resultsSection.style.display = "none";
+
+  updateJSONDropzoneDisplay("a");
+  updateJSONDropzoneDisplay("b");
+}
+
