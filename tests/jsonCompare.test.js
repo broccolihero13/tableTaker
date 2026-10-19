@@ -196,5 +196,40 @@ describe("Popup Compare JSON Unified Table UI", () => {
     document.getElementById("wipe-json-data-btn").click();
     expect(tbody.textContent).toBe("");
   });
+
+  test("auto-opens persistent standalone window on Firefox when clicking Compare tabs and supports Pop Out button", () => {
+    const openSpy = jest.spyOn(window, "open").mockImplementation(() => null);
+
+    // 1. Test explicit Pop Out button click
+    const popoutBtn = document.getElementById("popout-window-btn");
+    expect(popoutBtn).not.toBeNull();
+    popoutBtn.click();
+    expect(openSpy).toHaveBeenCalledWith(
+      "popup.html?tab=table&standalone=1",
+      "GridGenieWorkspace",
+      "popup=yes,width=900,height=720"
+    );
+
+    // 2. Test Firefox auto-popout when clicking Compare CSVs / Compare JSON
+    openSpy.mockClear();
+    const originalUA = navigator.userAgent;
+    Object.defineProperty(navigator, "userAgent", {
+      value: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:131.0) Gecko/20100101 Firefox/131.0",
+      configurable: true,
+    });
+
+    document.getElementById("tab-compare-csv").click();
+    expect(openSpy).toHaveBeenCalledWith(
+      "popup.html?tab=compare-csv&standalone=1",
+      "GridGenieWorkspace",
+      "popup=yes,width=900,height=720"
+    );
+
+    Object.defineProperty(navigator, "userAgent", {
+      value: originalUA,
+      configurable: true,
+    });
+    openSpy.mockRestore();
+  });
 });
 

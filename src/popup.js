@@ -62,6 +62,67 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("unload", wipeAll);
 });
 
+let currentActiveTabMode = "table";
+
+function isStandaloneWindow() {
+  try {
+    const params = new URLSearchParams(window.location.search || "");
+    return params.get("standalone") === "1";
+  } catch (_) {
+    return false;
+  }
+}
+
+function isFirefoxExtension() {
+  if (typeof window !== "undefined" && window.location && window.location.protocol === "moz-extension:") {
+    return true;
+  }
+  const ua = (typeof navigator !== "undefined" && navigator.userAgent) || "";
+  return /Firefox\//i.test(ua);
+}
+
+function openStandaloneWorkspace(mode) {
+  const targetMode = mode || currentActiveTabMode || "compare-csv";
+  const relativeUrl = `popup.html?tab=${encodeURIComponent(targetMode)}&standalone=1`;
+  const fullUrl =
+    browser && browser.runtime && typeof browser.runtime.getURL === "function"
+      ? browser.runtime.getURL(relativeUrl)
+      : relativeUrl;
+
+  if (browser && browser.windows && typeof browser.windows.create === "function") {
+    try {
+      const createRes = browser.windows.create({
+        url: fullUrl,
+        type: "popup",
+        width: 900,
+        height: 720,
+      });
+      if (createRes && typeof createRes.then === "function") {
+        createRes.then(() => {
+          if (typeof window.close === "function") window.close();
+        });
+      } else {
+        setTimeout(() => {
+          if (typeof window.close === "function") window.close();
+        }, 50);
+      }
+      return;
+    } catch (_) {
+      // Fallback below if windows.create is unavailable
+    }
+  }
+
+  if (browser && browser.tabs && typeof browser.tabs.create === "function") {
+    browser.tabs.create({ url: fullUrl });
+    if (typeof window.close === "function") window.close();
+    return;
+  }
+
+  if (typeof window.open === "function") {
+    window.open(fullUrl, "GridGenieWorkspace", "popup=yes,width=900,height=720");
+  }
+}
+
 function initNavigationTabs() {
   const tabTable = document.getElementById("tab-table-tools");
   const tabCompareCSV = document.getElementById("tab-compare-csv");
@@ -69,12 +130,32 @@ function initNavigationTabs() {
   const viewTable = document.getElementById("view-table-tools");
   const viewCompareCSV = document.getElementById("view-compare-csv");
   const viewCompareJSON = document.getElementById("view-compare-json");
+  const popoutBtn = document.getElementById("popout-window-btn");
 
   if (!tabTable || !tabCompareCSV || !viewTable || !viewCompareCSV) return;
 
-  const switchTab = (mode) => {
-    const isExpanded = mode === "compare-csv" || mode === "compare-json";
-    document.body.classList.toggle("compare-mode", isExpanded);
+  const standalone = isStandaloneWindow();
+  if (standalone) {
+    document.body.classList.add("standalone-window");
+    if (popoutBtn) popoutBtn.style.display = "none";
+  } else if (popoutBtn) {
+    popoutBtn.addEventListener("click", () => {
+      openStandaloneWorkspace(currentActiveTabMode);
+    });
+  }
+
+  const switchTab = (mode, options = {}) => {
+    const isCompareTab = mode === "compare-csv" || mode === "compare-json";
+
+    // In Firefox toolbar popups, opening a file dialog or switching to Finder closes the popup.
+    // Automatically pop out into a persistent standalone window when entering Compare views.
+    if (isCompareTab && !standalone && !options.skipAutoPopout && isFirefoxExtension()) {
+      openStandaloneWorkspace(mode);
+      return;
+    }
+
+    currentActiveTabMode = mode;
+    document.body.classList.toggle("compare-mode", isCompareTab);
 
     tabTable.classList.toggle("active", mode === "table");
     tabTable.setAttribute("aria-selected", String(mode === "table"));
@@ -96,13 +177,46 @@ function initNavigationTabs() {
   if (tabCompareJSON) {
     tabCompareJSON.addEventListener("click", () => switchTab("compare-json"));
   }
+
+  try {
+    const params = new URLSearchParams(window.location.search || "");
+    const initialTab = params.get("tab");
+    if (initialTab === "compare-csv" || initialTab === "compare-json" || initialTab === "table") {
+      switchTab(initialTab, { skipAutoPopout: true });
+    }
+  } catch (_) {
+    // Ignore URLSearchParams errors
+  }
+}
+
+function getTargetWebpageTab(callback) {
+  if (!browser || !browser.tabs) return;
+
+  browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const first = tabs && tabs[0];
+    const url = (first && first.url) || "";
+    const isExtensionPopupTab = /^(chrome|moz)-extension:\/\//i.test(url);
+
+    if (first && !isExtensionPopupTab && !isStandaloneWindow()) {
+      callback(first);
+      return;
+    }
+
+    // If running inside a standalone popup window, find the active tab in the main browser window
+    browser.tabs.query({ active: true }, (allActiveTabs) => {
+      const webTab =
+        (allActiveTabs || []).find(
+          (t) => t && t.url && !/^(chrome|moz)-extension:\/\//i.test(t.url)
+        ) || first;
+      callback(webTab);
+    });
+  });
 }
 
 function initTableToolsTab() {
   if (!browser || !browser.tabs) return;
 
-  browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    const activeTab = tabs && tabs[0];
+  getTargetWebpageTab((activeTab) => {
     const url = (activeTab && activeTab.url) || "";
 
     const restricted = [
@@ -127,7 +241,7 @@ function initTableToolsTab() {
         (!response.hasTables && response.buttonsStillAttached);
 
       if (stale) {
-        showStalePageUI();
+        showStalePageUI(activeTab.id);
       } else {
         loadExtensionUI(url);
       }
@@ -152,7 +266,7 @@ const showUnavailableMessage = () => {
   }
 };
 
-const showStalePageUI = () => {
+const showStalePageUI = (tabId) => {
   const statusEl = document.getElementById("table-tools-status");
   const controlsEl = document.getElementById("table-tools-controls");
   if (controlsEl) controlsEl.style.display = "none";
@@ -168,8 +282,14 @@ const showStalePageUI = () => {
     refreshBtn.className = "action-button";
     refreshBtn.textContent = "Refresh Page";
     refreshBtn.addEventListener("click", () => {
-      browser.tabs.reload();
-      window.close();
+      if (tabId !== undefined) {
+        browser.tabs.reload(tabId);
+      } else {
+        browser.tabs.reload();
+      }
+      if (!isStandaloneWindow()) {
+        window.close();
+      }
     });
     statusEl.appendChild(heading);
     statusEl.appendChild(msg);
@@ -192,7 +312,7 @@ const loadExtensionUI = (url) => {
 
   if (activateBtn) {
     activateBtn.addEventListener("click", () => {
-      browser.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+      getTargetWebpageTab((tab) => {
         if (tab?.id) {
           browser.tabs.sendMessage(tab.id, { action: "activate" });
         }
@@ -202,7 +322,7 @@ const loadExtensionUI = (url) => {
 
   if (deactivateBtn) {
     deactivateBtn.addEventListener("click", () => {
-      browser.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+      getTargetWebpageTab((tab) => {
         if (tab?.id) {
           browser.tabs.sendMessage(tab.id, { action: "deactivate" });
         }

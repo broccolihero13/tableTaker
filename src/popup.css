@@ -46,6 +46,19 @@ body.compare-mode {
   min-height: 480px;
 }
 
+body.standalone-window,
+body.standalone-window.compare-mode {
+  width: 100%;
+  max-width: 1200px;
+  min-height: 100vh;
+  margin: 0 auto;
+}
+
+body.standalone-window .cmp-table-scroll {
+  max-height: calc(100vh - 300px);
+  min-height: 280px;
+}
+
 /* Header & Navigation */
 .gg-header {
   display: flex;
@@ -98,6 +111,27 @@ h1 {
   border: 1px solid rgba(20, 184, 166, 0.3);
   padding: 1px 6px;
   border-radius: 999px;
+}
+
+.gg-popout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  padding: 2px 7px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.gg-popout-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
+  background: rgba(20, 184, 166, 0.14);
 }
 
 .gg-security-badge {

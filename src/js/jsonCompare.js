@@ -134,15 +134,18 @@ function flattenJSONToMap(rootValue, options = {}) {
       for (let i = 0; i < current.length; i++) {
         const item = current[i];
         let segPath;
-        if (
+        const propDesc =
           arrayKeyProp &&
           item !== null &&
           typeof item === "object" &&
-          !Array.isArray(item) &&
-          Object.prototype.hasOwnProperty.call(item, arrayKeyProp) &&
-          (typeof item[arrayKeyProp] === "string" || typeof item[arrayKeyProp] === "number")
+          !Array.isArray(item)
+            ? Object.getOwnPropertyDescriptor(item, arrayKeyProp)
+            : undefined;
+        if (
+          propDesc &&
+          (typeof propDesc.value === "string" || typeof propDesc.value === "number")
         ) {
-          segPath = `${currentPath}[${arrayKeyProp}=${JSON.stringify(String(item[arrayKeyProp]))}]`;
+          segPath = `${currentPath}[${arrayKeyProp}=${JSON.stringify(String(propDesc.value))}]`;
         } else {
           segPath = formatJSONPath(currentPath, i, true);
         }

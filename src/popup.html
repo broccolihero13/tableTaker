@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
+      content="default-src 'self'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
     />
     <link rel="stylesheet" href="popup.css" />
     <link rel="icon" type="image/png" href="images/icon.png" />
@@ -20,7 +20,20 @@
         <div class="gg-brand-text">
           <div class="gg-title-row">
             <h1>Grid Genie</h1>
-            <span class="gg-version-pill">v2.2</span>
+            <span class="gg-version-pill">v2.3</span>
+            <button
+              type="button"
+              id="popout-window-btn"
+              class="gg-popout-btn"
+              title="Open in a persistent standalone window (stays open when switching to Finder or browsing files)"
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+              </svg>
+              Pop Out
+            </button>
           </div>
           <span
             class="gg-security-badge"

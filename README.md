@@ -24,6 +24,8 @@ It works with many form-based tables and sensitive datasets, making repetitive d
   - Compare any two JSON files or pasted JSON values (deep nested objects, key-value maps, and arrays) in a clean comparison table matching the CSV Compare layout
   - **Line-by-Line Multiline String Expansion**: automatically expands multiline string values (`\n`) into individual table rows (`key [Line 1]`, `key [Line 2]`, ...) so every line is compared side-by-side in the same default table
   - Export the comparison table as a sanitized **CSV** (`Export CSV`) or download a full **Summary JSON** report (`Summary JSON`)
+- ✅ **Persistent Standalone "Pop Out" Window**:
+  - Automatically opens Compare CSVs / Compare JSON in a persistent standalone window on Firefox (and via the header **Pop Out** button in Chrome/Firefox) so switching to Finder or opening native file pickers never dismisses your workspace
 - ✅ Intelligently populates `input`, `textarea`, `select` (dropdowns), and `checkbox` fields
 - ✅ React, Vue, and modern JS framework compatibility via native event dispatching
 - ✅ **Security-first design**: no data is stored or transmitted — everything runs in volatile local memory and is wiped on popup close or via the **Clear Data** button
@@ -117,9 +119,10 @@ manifest.firefox.json        ← Firefox Manifest V3 configuration
 
 Grid Genie does **not collect, transmit, or store any data**.
 
-- **100% Local Execution**: All table parsing and CSV comparisons run strictly locally inside your browser.
-- **Volatile Memory Only**: Sensitive CSV comparison files are held only in transient JavaScript memory inside the isolated extension popup—never written to `localStorage`, `sessionStorage`, `chrome.storage`, or `IndexedDB`, and automatically wiped when the popup closes.
-- **XSS & Formula Injection Protection**: All compared CSV cells are rendered via safe DOM `textContent` APIs, and exported comparison reports sanitize spreadsheet formula prefixes (`=`, `+`, `-`, `@`) by default.
+- **100% Local Execution & Zero Network Access (`connect-src 'none'`)**: All table parsing and CSV/JSON comparisons run strictly locally inside your browser. The popup enforces a strict Content Security Policy with `connect-src 'none'`, guaranteeing at the browser level that comparison data can never be transmitted over the network.
+- **Minimal Content Script Footprint**: Only `js/content.js` runs on web pages; the CSV and JSON comparison engines (`js/csvCompare.js`, `js/jsonCompare.js`) run exclusively inside the isolated extension popup.
+- **Volatile Memory Only**: Sensitive CSV and JSON comparison files are held only in transient JavaScript memory inside the isolated extension popup—never written to `localStorage`, `sessionStorage`, `chrome.storage`, or `IndexedDB`, and automatically wiped when the popup/window closes.
+- **XSS, Prototype Pollution & Formula Injection Protection**: All compared CSV and JSON values are rendered via safe DOM `textContent` APIs, JSON flattening uses `Map` and `Object.getOwnPropertyDescriptor` to prevent `__proto__` pollution, and exported CSV reports sanitize spreadsheet formula prefixes (`=`, `+`, `-`, `@`) by default.
 
 ---
 
